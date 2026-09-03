@@ -1,0 +1,152 @@
+@import 'tailwindcss';
+
+/*
+ * Design tokens.
+ *
+ * The palette is deliberately restrained: one brand colour for actions and totals, two
+ * accents to distinguish examination from consultation income in charts and legends, and
+ * neutrals for everything else. Financial screens are easier to read when colour carries
+ * meaning rather than decoration.
+ */
+@theme {
+  --color-canvas: #f4f6f8;
+  --color-surface: #ffffff;
+  --color-line: #e3e7ec;
+  --color-ink: #0f1728;
+  --color-muted: #5b6675;
+
+  --color-brand-50: #eefbf8;
+  --color-brand-100: #d3f4ec;
+  --color-brand-500: #14a394;
+  --color-brand-600: #0f8177;
+  --color-brand-700: #0e6a63;
+  --color-brand-900: #114240;
+
+  /* Examination and consultation, used consistently in every chart and legend. */
+  --color-exam: #0f8177;
+  --color-consult: #c2762a;
+
+  --color-danger: #b42318;
+  --color-danger-bg: #fef3f2;
+  --color-warn: #b54708;
+  --color-warn-bg: #fffaeb;
+
+  --font-sans:
+    'Segoe UI', system-ui, -apple-system, 'Noto Sans Arabic', 'Noto Kufi Arabic', Tahoma,
+    'Helvetica Neue', Arial, sans-serif;
+
+  --radius-card: 0.875rem;
+}
+
+@layer base {
+  html {
+    /* Stops iOS Safari from inflating text in landscape. */
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    margin: 0;
+    /* Removes the grey flash when tapping buttons on Android. */
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+  }
+
+  /*
+   * 16px is the threshold below which iOS Safari zooms the viewport when an input takes
+   * focus. On a data-entry screen that zoom is disorienting, so no control goes under it.
+   */
+  input,
+  select,
+  textarea,
+  button {
+    font-family: inherit;
+    font-size: 1rem;
+  }
+
+  /* Number inputs: the steppers are the touch affordance, so the native spinners only
+     add clutter and shrink the tap area. */
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button {
+    appearance: none;
+    margin: 0;
+  }
+
+  input[type='number'] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand-600);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-card);
+  }
+
+  /*
+   * Minimum comfortable touch target. 44px is the smallest reliably tappable size on a
+   * phone; primary actions use 52px.
+   */
+  .tap {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .tabnum {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Safe-area helpers: content sits above the iPhone home indicator instead of under it. */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.mb-safe {
+  margin-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.h-safe-nav {
+  height: calc(4.25rem + env(safe-area-inset-bottom, 0px));
+}
+
+/*
+ * Print styles: this is the PDF export path. The browser's Print to PDF handles Arabic
+ * shaping properly, which a bundled server-side font often does not.
+ */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  .card {
+    border-color: #cbd2da;
+    break-inside: avoid;
+  }
+
+  .print-table {
+    display: table !important;
+    width: 100%;
+  }
+
+  .print-cards {
+    display: none !important;
+  }
+
+  @page {
+    margin: 14mm;
+  }
+}

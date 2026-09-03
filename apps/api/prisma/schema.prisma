@@ -1,0 +1,132 @@
+// Clinic Income Portal - database schema
+//
+// Design notes
+// ------------
+// * Money is NUMERIC (Prisma `Decimal`). No monetary value is ever a floating point type.
+// * Calendar dates use `@db.Date` - no time, no timezone.
+// * Daily activity is modelled as a header (`daily_activities`) plus one line per service
+//   (`daily_activity_lines`). Adding a service later - Follow-up, Procedure - is an INSERT
+//   into `services` and needs no migration and no change to this schema.
+// * Several integrity rules cannot be expressed in the Prisma schema language (exclusion
+//   constraints, CHECK constraints, triggers). They live in the SQL migration and are
+//   documented there; they are what make the financial guarantees enforceable rather than
+//   merely intended.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE
+}
+
+model Clinic {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique @db.VarChar(120)
+  status    Status   @default(ACTIVE)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  prices     ClinicPrice[]
+  activities DailyActivity[]
+  services   Service[]
+
+  @@map("clinics")
+}
+
+model Service {
+  id        Int      @id @default(autoincrement())
+  clinicId  Int      @map("clinic_id") @default(1)
+  /// Stable machine key (EXAMINATION, CONSULTATION, ...). Never shown to users.
+  code      String   @db.VarChar(40)
+  nameEn    String   @map("name_en") @db.VarChar(120)
+  nameAr    String   @map("name_ar") @db.VarChar(120)
+  status    Status   @default(ACTIVE)
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  prices ClinicPrice[]
+  lines  DailyActivityLine[]
+
+  clinic Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  @@unique([clinicId, code])
+  @@map("services")
+}
+
+/// Price of one service at one clinic over a date range.
+///
+/// `effectiveTo = null` means open-ended. An exclusion constraint in the migration
+/// guarantees that the periods for a given (clinic, service) never overlap, so the fee
+/// applicable on any date is unambiguous.
+model ClinicPrice {
+  id            Int       @id @default(autoincrement())
+  clinicId      Int       @map("clinic_id")
+  serviceId     Int       @map("service_id")
+  fee           Decimal   @db.Decimal(10, 2)
+  effectiveFrom DateTime  @map("effective_from") @db.Date
+  effectiveTo   DateTime? @map("effective_to") @db.Date
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  clinic  Clinic  @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+
+  @@index([clinicId, serviceId, effectiveFrom])
+  @@map("clinic_prices")
+}
+
+/// One clinic on one calendar day.
+///
+/// The unique index on (clinic, date) is the duplicate-prevention rule: it is enforced by
+/// the database, not by an application code path that could be bypassed.
+///
+/// `createdBy` / `updatedBy` are the seam for authentication. They stay null until real
+/// users exist, at which point no schema change is needed.
+model DailyActivity {
+  id           Int      @id @default(autoincrement())
+  clinicId     Int      @map("clinic_id")
+  activityDate DateTime @map("activity_date") @db.Date
+  /// Maintained by a database trigger as the sum of the child lines.
+  totalIncome  Decimal  @default(0) @map("total_income") @db.Decimal(12, 2)
+  note         String?  @db.VarChar(500)
+  createdBy    Int?     @map("created_by")
+  updatedBy    Int?     @map("updated_by")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  clinic Clinic              @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  lines  DailyActivityLine[]
+
+  @@unique([clinicId, activityDate])
+  @@index([activityDate])
+  @@map("daily_activities")
+}
+
+/// Activity for one service within one clinic-day.
+///
+/// `unitFee` is the fee FROZEN at save time - this is what makes historical income immune
+/// to later price changes. `lineTotal` is policed by a CHECK constraint requiring it to
+/// equal `quantity * unitFee`, so the stored income cannot drift from the formula.
+model DailyActivityLine {
+  id         Int     @id @default(autoincrement())
+  activityId Int     @map("activity_id")
+  serviceId  Int     @map("service_id")
+  quantity   Int
+  unitFee    Decimal @map("unit_fee") @db.Decimal(10, 2)
+  lineTotal  Decimal @map("line_total") @db.Decimal(12, 2)
+
+  activity DailyActivity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  service  Service       @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+
+  @@unique([activityId, serviceId])
+  @@index([serviceId])
+  @@map("daily_activity_lines")
+}
