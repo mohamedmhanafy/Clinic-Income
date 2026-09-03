@@ -2,7 +2,7 @@ import { Suspense, lazy } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useAppState } from '../lib/app-state';
-import { useAnnual, useComparison, useDashboard, useMonthly } from '../lib/queries';
+import { useAnnual, useClinics, useComparison, useDashboard, useMonthly } from '../lib/queries';
 import { ApiError } from '../lib/api';
 import { formatCount, formatMoney, monthNameShort } from '../lib/format';
 import { Card, EmptyState, ErrorNotice, SectionTitle, Spinner } from '../components/ui';
@@ -47,10 +47,30 @@ export default function Dashboard() {
   const { t } = useTranslation();
   const { clinicId, year, month, language } = useAppState();
 
+  const clinics = useClinics();
   const summary = useDashboard(clinicId, year, month);
   const monthly = useMonthly(clinicId, year, month);
   const annual = useAnnual(year);
   const comparison = useComparison({ year, month });
+
+  if (clinics.isPending) return <Spinner />;
+
+  if (clinics.data && clinics.data.length === 0) {
+    return (
+      <EmptyState
+        title={t('dashboard.noClinicsTitle')}
+        hint={t('dashboard.noClinicsHint')}
+        action={
+          <Link
+            to="/settings/clinics"
+            className="tap mt-1 inline-flex items-center justify-center rounded-xl bg-brand-600 px-5 text-sm font-semibold text-white"
+          >
+            {t('dashboard.addClinic')}
+          </Link>
+        }
+      />
+    );
+  }
 
   if (summary.isPending) return <Spinner />;
 

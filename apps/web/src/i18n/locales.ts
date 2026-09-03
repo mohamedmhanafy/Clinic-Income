@@ -71,6 +71,9 @@ export const en = {
     composition: 'Revenue Composition',
     emptyHint: 'Record a day to see figures here.',
     recordDay: 'Record a day',
+    noClinicsTitle: 'No clinics yet',
+    noClinicsHint: 'Add a clinic to start recording income.',
+    addClinic: 'Add a clinic',
   },
   daily: {
     title: 'Daily Income',
@@ -226,6 +229,9 @@ export const ar: typeof en = {
     composition: 'توزيع الإيرادات',
     emptyHint: 'سجّل يوماً لعرض الأرقام هنا.',
     recordDay: 'تسجيل يوم',
+    noClinicsTitle: 'لا توجد عيادات بعد',
+    noClinicsHint: 'أضف عيادة لبدء تسجيل الإيرادات.',
+    addClinic: 'إضافة عيادة',
   },
   daily: {
     title: 'الإيراد اليومي',
