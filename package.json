@@ -2,6 +2,7 @@
   "name": "clinic-income-portal",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "Mobile-first portal for managing and analysing monthly income of medical clinics",
   "workspaces": [
     "packages/shared",
