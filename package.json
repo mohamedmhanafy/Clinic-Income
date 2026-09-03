@@ -6,7 +6,6 @@
   "workspaces": [
     "packages/shared",
     "apps/api",
-    "apps/server",
     "apps/web"
   ],
   "scripts": {
@@ -14,7 +13,6 @@
     "dev:api": "npm run dev -w @clinic/api",
     "dev:web": "npm run dev -w @clinic/web",
     "build": "npm run build -w @clinic/shared && npm run build -w @clinic/api && npm run build -w @clinic/web",
-    "build:server": "npm run build -w @clinic/shared && npm run build -w @clinic/api && npm run build -w @clinic/server",
     "test": "npm run test -w @clinic/api",
     "db:migrate": "npm run db:migrate -w @clinic/api",
     "db:seed": "npm run db:seed -w @clinic/api",
@@ -23,6 +21,7 @@
     "setup": "npm install && npm run build -w @clinic/shared && npm run db:migrate && npm run db:seed"
   },
   "devDependencies": {
+    "@vercel/node": "^5.1.13",
     "concurrently": "^9.1.2",
     "typescript": "^5.7.3"
   },
