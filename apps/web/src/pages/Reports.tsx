@@ -10,6 +10,8 @@ import {
   formatMoney,
   lastOfMonth,
   monthName,
+  monthNameShort,
+  serviceName,
   todayIso,
 } from '../lib/format';
 import { Card, EmptyState, ErrorNotice, Field, Input, SectionTitle, Spinner } from '../components/ui';
@@ -17,13 +19,14 @@ import { PeriodBar } from '../components/PeriodBar';
 import { ExportBar } from '../components/ExportBar';
 import { ChevronIcon } from '../components/icons';
 import { DatePicker } from '../components/DatePicker';
+import { CompositionChart, DailyTrendChart, MonthlyTrendChart } from '../components/charts';
 
 /**
  * Reports.
  *
- * Four report types behind a scrollable tab strip rather than a desktop tab row, so the
- * whole set stays reachable with a thumb on a narrow screen. Each tab exports to CSV and
- * Excel, and prints to PDF through the browser.
+ * Three report types behind a scrollable tab strip rather than a desktop tab row, so the
+ * whole set stays reachable with a thumb on a narrow screen. Each tab exports to Excel and
+ * prints to PDF through the browser.
  */
 
 type Tab = 'daily' | 'monthly' | 'annual';
@@ -84,8 +87,8 @@ function DailyReport() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="w-full max-w-xs">
+      <div className="flex items-end justify-between gap-3">
+        <div className="no-print w-40 shrink-0">
           <Field label={t('common.date')} htmlFor="report-date">
             <DatePicker
               id="report-date"
@@ -94,7 +97,7 @@ function DailyReport() {
             />
           </Field>
         </div>
-        {clinicId !== null && <ExportBar report="daily" params={{ clinicId, date }} />}
+        <ExportBar />
       </div>
 
       {entry.isPending && <Spinner />}
@@ -143,39 +146,63 @@ function DailyReport() {
   );
 }
 
+/**
+ * One point per calendar day of the report's month, not just the days with a saved entry -
+ * a day nobody recorded is real information (nothing happened), not a gap to skip over.
+ */
+function fillMonthDays(report: {
+  year: number;
+  month: number;
+  rows: Array<{ dayOfMonth: number; totalDailyIncome: string }>;
+}): Array<{ day: number; income: string }> {
+  const byDay = new Map(report.rows.map((row) => [row.dayOfMonth, row.totalDailyIncome]));
+  const daysInMonth = new Date(report.year, report.month, 0).getDate();
+  return Array.from({ length: daysInMonth }, (_, index) => {
+    const day = index + 1;
+    return { day, income: byDay.get(day) ?? '0.00' };
+  });
+}
+
 function MonthlyReport() {
   const { t } = useTranslation();
-  const { clinicId, year, month } = useAppState();
+  const { clinicId, year, month, language } = useAppState();
   const report = useMonthly(clinicId, year, month);
 
   return (
     <div className="flex flex-col gap-4">
-      <PeriodBar />
-      {clinicId !== null && <ExportBar report="monthly" params={{ clinicId, year, month }} />}
+      <div className="flex items-center justify-between gap-3">
+        <PeriodBar />
+        <ExportBar />
+      </div>
 
       {report.isPending && <Spinner />}
       {report.data && (
         <Card>
+          {/* PeriodBar (month/year) is hidden on the printed page, so this header carries
+              that context onto paper - otherwise a printed report doesn't say which month
+              it's for. */}
           <div className="border-b border-line px-4 py-3">
             <p className="font-semibold text-ink">{report.data.clinicName}</p>
+            <p className="text-sm text-muted">
+              {monthName(report.data.month, language)} {report.data.year}
+            </p>
           </div>
-          <div className="divide-y divide-line">
-            <StatRow
-              label={t('dashboard.examinations')}
-              value={formatCount(report.data.totals.examinationCount)}
-            />
-            <StatRow
-              label={t('monthly.examIncome')}
-              value={formatMoney(report.data.totals.examinationIncome)}
-            />
-            <StatRow
-              label={t('dashboard.consultations')}
-              value={formatCount(report.data.totals.consultationCount)}
-            />
-            <StatRow
-              label={t('monthly.consultIncome')}
-              value={formatMoney(report.data.totals.consultationIncome)}
-            />
+          {/* One row per service, named exactly as configured in Settings > Services, rather
+              than a fixed examination/consultation pair. */}
+          <ul className="divide-y divide-line">
+            {report.data.byService.map((row) => (
+              <li key={row.serviceId} className="flex items-center justify-between gap-3 p-3.5">
+                <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink">
+                  {language === 'ar' ? row.serviceNameAr : row.serviceNameEn}
+                </span>
+                <span className="tabnum text-sm text-muted">{formatCount(row.quantity)}</span>
+                <span className="tabnum w-24 text-end text-sm font-semibold text-ink">
+                  {formatMoney(row.income)}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <div className="divide-y divide-line border-t border-line">
             <StatRow
               label={t('dashboard.workingDays')}
               value={formatCount(report.data.totals.workingDays)}
@@ -190,6 +217,31 @@ function MonthlyReport() {
           </div>
         </Card>
       )}
+
+      {report.data && (
+        <>
+          <section className="no-print">
+            <SectionTitle>{t('dashboard.dailyTrend')}</SectionTitle>
+            <Card className="p-3">
+              <DailyTrendChart data={fillMonthDays(report.data)} />
+            </Card>
+          </section>
+
+          {Number(report.data.totals.totalIncome) > 0 && (
+            <section className="no-print">
+              <SectionTitle>{t('dashboard.composition')}</SectionTitle>
+              <Card className="p-4">
+                <CompositionChart
+                  services={report.data.byService.map((row) => ({
+                    name: language === 'ar' ? row.serviceNameAr : row.serviceNameEn,
+                    income: row.income,
+                  }))}
+                />
+              </Card>
+            </section>
+          )}
+        </>
+      )}
     </div>
   );
 }
@@ -197,22 +249,25 @@ function MonthlyReport() {
 
 function AnnualReport() {
   const { t } = useTranslation();
-  const { year, setPeriod, month, language } = useAppState();
+  const { clinicId, year, setPeriod, month, language } = useAppState();
   const [openMonth, setOpenMonth] = useState<number | null>(null);
-  const report = useAnnual(year);
+  const report = useAnnual(clinicId, year);
 
-  const years = Array.from({ length: 9 }, (_, index) => new Date().getFullYear() - 4 + index);
+  // A generous span rather than a narrow window around today - old records and future
+  // planning both belong in the same dropdown.
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 60 }, (_, index) => currentYear + 5 - index);
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="w-32">
+        <div className="no-print w-32">
           <Field label={t('common.year')} htmlFor="annual-year">
             <select
               id="annual-year"
               value={year}
               onChange={(event) => setPeriod(Number(event.target.value), month)}
-              className="tap w-full rounded-xl border border-line bg-white px-3 py-3 text-ink focus:outline-none"
+              className="tap h-11 w-full rounded-xl border border-line bg-white px-3 text-ink focus:outline-none"
             >
               {years.map((value) => (
                 <option key={value} value={value}>
@@ -222,20 +277,46 @@ function AnnualReport() {
             </select>
           </Field>
         </div>
-        <ExportBar report="annual" params={{ year }} />
+        <ExportBar />
       </div>
 
       {report.isPending && <Spinner />}
 
-      {report.data && report.data.clinics.length === 0 && (
+      {/* PeriodBar has no year selector shown here on the printed page, so this header
+          carries the clinic and year onto paper. */}
+      {report.data && (
+        <div className="px-1">
+          <p className="font-semibold text-ink">{report.data.clinicName}</p>
+          <p className="text-sm text-muted">{report.data.year}</p>
+        </div>
+      )}
+
+      {report.data && report.data.rows.some((row) => Number(row.total) > 0) && (
+        <section className="no-print">
+          <SectionTitle>{t('dashboard.monthlyTrend')}</SectionTitle>
+          <Card className="p-3">
+            <MonthlyTrendChart
+              data={report.data.rows.map((row) => ({
+                label: monthNameShort(row.month, language),
+                income: row.total,
+              }))}
+            />
+          </Card>
+        </section>
+      )}
+
+      {report.data && report.data.services.length === 0 && (
         <EmptyState title={t('common.noData')} />
       )}
 
-      {report.data && report.data.clinics.length > 0 && (
+      {report.data && report.data.services.length > 0 && (
         <>
-          {/* Phone: a month list that expands to per-clinic figures, instead of a matrix
-              that would be as wide as the clinic count. */}
-          <ul className="print-cards flex flex-col gap-2 lg:hidden">
+          {/* Phone: one row per month with an arrow that opens its service breakdown, rather
+              than a table with as many columns as services - that never fits a phone width
+              without scrolling. print:hidden/print:block (not the responsive lg: classes
+              alone) because a `hidden` ancestor hides its contents on paper too regardless of
+              screen width, so the print variant has to override display on this same element. */}
+          <ul className="flex flex-col gap-2 lg:hidden print:hidden">
             {report.data.rows.map((row) => {
               const isOpen = openMonth === row.month;
               return (
@@ -261,11 +342,11 @@ function AnnualReport() {
                     </button>
                     {isOpen && (
                       <div className="divide-y divide-line border-t border-line bg-canvas/60">
-                        {report.data.clinics.map((clinic) => (
+                        {report.data.services.map((service) => (
                           <StatRow
-                            key={clinic.clinicId}
-                            label={clinic.clinicName}
-                            value={formatMoney(row.byClinic[String(clinic.clinicId)] ?? '0.00')}
+                            key={service.serviceId}
+                            label={serviceName(service, language)}
+                            value={formatMoney(row.byService[String(service.serviceId)] ?? '0.00')}
                           />
                         ))}
                       </div>
@@ -285,14 +366,14 @@ function AnnualReport() {
             </li>
           </ul>
 
-          <Card className="hidden overflow-x-auto lg:block">
-            <table className="print-table w-full text-sm">
+          <Card className="hidden overflow-x-auto lg:block print:block">
+            <table className="min-w-full text-sm">
               <thead className="bg-canvas text-xs tracking-wide text-muted uppercase">
                 <tr>
                   <th className="px-4 py-3 text-start font-semibold">{t('common.month')}</th>
-                  {report.data.clinics.map((clinic) => (
-                    <th key={clinic.clinicId} className="px-4 py-3 text-end font-semibold">
-                      {clinic.clinicName}
+                  {report.data.services.map((service) => (
+                    <th key={service.serviceId} className="px-4 py-3 text-end font-semibold">
+                      {serviceName(service, language)}
                     </th>
                   ))}
                   <th className="px-4 py-3 text-end font-semibold">{t('common.total')}</th>
@@ -302,9 +383,9 @@ function AnnualReport() {
                 {report.data.rows.map((row) => (
                   <tr key={row.month}>
                     <td className="px-4 py-2.5 text-ink">{monthName(row.month, language)}</td>
-                    {report.data.clinics.map((clinic) => (
-                      <td key={clinic.clinicId} className="tabnum px-4 py-2.5 text-end">
-                        {formatMoney(row.byClinic[String(clinic.clinicId)] ?? '0.00')}
+                    {report.data.services.map((service) => (
+                      <td key={service.serviceId} className="tabnum px-4 py-2.5 text-end">
+                        {formatMoney(row.byService[String(service.serviceId)] ?? '0.00')}
                       </td>
                     ))}
                     <td className="tabnum px-4 py-2.5 text-end font-semibold">
@@ -316,9 +397,9 @@ function AnnualReport() {
               <tfoot className="border-t-2 border-line bg-canvas font-bold">
                 <tr>
                   <td className="px-4 py-3">{t('common.total')}</td>
-                  {report.data.clinics.map((clinic) => (
-                    <td key={clinic.clinicId} className="tabnum px-4 py-3 text-end">
-                      {formatMoney(report.data.totals.byClinic[String(clinic.clinicId)] ?? '0.00')}
+                  {report.data.services.map((service) => (
+                    <td key={service.serviceId} className="tabnum px-4 py-3 text-end">
+                      {formatMoney(report.data.totals.byService[String(service.serviceId)] ?? '0.00')}
                     </td>
                   ))}
                   <td className="tabnum px-4 py-3 text-end">

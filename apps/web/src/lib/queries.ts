@@ -24,7 +24,7 @@ export const keys = {
     ['dashboard', clinicId, year, month] as const,
   monthly: (clinicId: number, year: number, month: number) =>
     ['monthly', clinicId, year, month] as const,
-  annual: (year: number) => ['annual', year] as const,
+  annual: (clinicId: number, year: number) => ['annual', clinicId, year] as const,
 };
 
 export function useClinics(includeInactive = false) {
@@ -76,8 +76,12 @@ export function useMonthly(clinicId: number | null, year: number, month: number)
   });
 }
 
-export function useAnnual(year: number) {
-  return useQuery({ queryKey: keys.annual(year), queryFn: () => api.reports.annual(year) });
+export function useAnnual(clinicId: number | null, year: number) {
+  return useQuery({
+    queryKey: keys.annual(clinicId ?? 0, year),
+    queryFn: () => api.reports.annual(clinicId as number, year),
+    enabled: clinicId !== null,
+  });
 }
 
 /** Invalidates every view derived from recorded income. */
@@ -116,10 +120,16 @@ export function useCreateClinic() {
 
 export function useUpdateClinic() {
   const client = useQueryClient();
+  const invalidate = useInvalidateIncome();
   return useMutation({
     mutationFn: ({ id, input }: { id: number; input: ClinicUpdateInput }) =>
       api.clinics.update(id, input),
-    onSuccess: () => void client.invalidateQueries({ queryKey: ['clinics'] }),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: ['clinics'] });
+      // Toggling active/inactive changes which clinics appear in the annual report, so its
+      // cached data goes stale the moment status changes, not just when income is recorded.
+      invalidate();
+    },
   });
 }
 

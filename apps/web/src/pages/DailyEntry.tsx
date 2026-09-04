@@ -272,9 +272,6 @@ export default function DailyEntry() {
                     <span className="text-base font-semibold text-ink">
                       {language === 'ar' ? row.nameAr : row.nameEn}
                     </span>
-                    <span className="ms-2 text-sm text-muted">
-                      {language === 'ar' ? row.nameEn : row.nameAr}
-                    </span>
                   </label>
 
                   <Stepper

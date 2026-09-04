@@ -153,6 +153,7 @@ export const dailyReportQuerySchema = z.object({
 });
 
 export const annualQuerySchema = z.object({
+  clinicId: idSchema,
   year: yearSchema,
   format: exportFormatSchema,
 });

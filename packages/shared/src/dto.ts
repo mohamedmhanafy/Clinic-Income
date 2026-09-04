@@ -145,21 +145,32 @@ export interface MonthlyReportDto {
     totalIncome: Money;
     workingDays: number;
   };
+  /** Income per service, so the composition chart shows every service, not just the seeded two. */
+  byService: Array<{
+    serviceId: number;
+    serviceCode: string;
+    serviceNameEn: string;
+    serviceNameAr: string;
+    quantity: number;
+    income: Money;
+  }>;
 }
 
 
 
 export interface AnnualReportDto {
+  clinicId: number;
+  clinicName: string;
   year: number;
-  clinics: Array<{ clinicId: number; clinicName: string }>;
+  services: Array<{ serviceId: number; serviceCode: string; serviceNameEn: string; serviceNameAr: string }>;
   rows: Array<{
     month: number;
-    /** Income per clinic, keyed by clinic id as a string. */
-    byClinic: Record<string, Money>;
+    /** Income per service, keyed by service id as a string. */
+    byService: Record<string, Money>;
     total: Money;
   }>;
   totals: {
-    byClinic: Record<string, Money>;
+    byService: Record<string, Money>;
     total: Money;
   };
 }

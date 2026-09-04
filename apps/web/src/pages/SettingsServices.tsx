@@ -21,7 +21,7 @@ import { DatePicker } from '../components/DatePicker';
 
 export default function SettingsServices() {
   const { t } = useTranslation();
-  const { clinicId, setClinicId } = useAppState();
+  const { clinicId, setClinicId, language } = useAppState();
   
   const clinics = useClinics();
   const services = useServices(clinicId, true);
@@ -109,8 +109,9 @@ export default function SettingsServices() {
               <Card>
                 <button type="button" onClick={() => openEdit(service)} className="tap flex w-full items-center gap-3 px-4 py-3.5 text-start">
                   <span className="min-w-0 flex-1">
-                    <span className="block font-semibold text-ink">{service.nameEn}</span>
-                    <span className="block text-sm text-muted">{service.nameAr}</span>
+                    <span className="block font-semibold text-ink">
+                      {language === 'ar' ? service.nameAr : service.nameEn}
+                    </span>
                     <span className="mt-0.5 block font-mono text-xs text-muted">{service.code}</span>
                   </span>
                   <Badge tone={service.status === 'ACTIVE' ? 'active' : 'inactive'}>

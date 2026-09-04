@@ -134,15 +134,7 @@ export const api = {
       request<DashboardSummaryDto>(`/api/dashboard/summary?${query({ clinicId, year, month })}`),
     monthly: (clinicId: number, year: number, month: number) =>
       request<MonthlyReportDto>(`/api/reports/monthly?${query({ clinicId, year, month })}`),
-    annual: (year: number) => request<AnnualReportDto>(`/api/reports/annual?${query({ year })}`),
-  },
-
-  /** Absolute URL for a report export, used as the href of a download link. */
-  exportUrl(
-    report: 'daily' | 'monthly' | 'annual',
-    format: 'csv' | 'xlsx',
-    params: Record<string, string | number | undefined>,
-  ): string {
-    return `${BASE_URL}/api/reports/${report}?${query({ ...params, format })}`;
+    annual: (clinicId: number, year: number) =>
+      request<AnnualReportDto>(`/api/reports/annual?${query({ clinicId, year })}`),
   },
 };

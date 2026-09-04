@@ -36,9 +36,7 @@ export default function Monthly() {
           <h1 className="text-xl font-bold text-ink">{t('monthly.title')}</h1>
           {report.data && <p className="text-sm text-muted">{report.data.clinicName}</p>}
         </div>
-        {clinicId !== null && (
-          <ExportBar report="monthly" params={{ clinicId, year, month }} />
-        )}
+        <ExportBar />
       </div>
 
       <PeriodBar />
@@ -87,8 +85,10 @@ export default function Monthly() {
             </div>
           </div>
 
-          {/* Phone: expandable cards. */}
-          <ul className="print-cards flex flex-col gap-2 lg:hidden">
+          {/* Phone: expandable cards. print:hidden (not just lg:hidden) because a `hidden`
+              ancestor hides its contents on the printed page too, regardless of screen
+              width, so print visibility has to be set on this same element. */}
+          <ul className="flex flex-col gap-2 lg:hidden print:hidden">
             {report.data.rows.map((row) => {
               const isOpen = expanded === row.date;
               return (
@@ -166,9 +166,9 @@ export default function Monthly() {
             })}
           </ul>
 
-          {/* Tablet and desktop: the full table. */}
-          <Card className="hidden overflow-hidden lg:block">
-            <table className="print-table w-full text-sm">
+          {/* Tablet and desktop: the full table. Always shown on the printed page. */}
+          <Card className="hidden overflow-x-auto lg:block print:block">
+            <table className="min-w-full text-sm">
               <thead className="bg-canvas text-xs tracking-wide text-muted uppercase">
                 <tr>
                   <th className="px-4 py-3 text-start font-semibold">{t('common.date')}</th>

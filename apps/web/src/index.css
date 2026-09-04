@@ -130,6 +130,7 @@
 
   body {
     background: #fff;
+    font-size: 11px;
   }
 
   .card {
@@ -137,16 +138,16 @@
     break-inside: avoid;
   }
 
-  .print-table {
-    display: table !important;
-    width: 100%;
-  }
-
-  .print-cards {
-    display: none !important;
+  /* Tables (the annual/monthly breakdowns) run to a dozen-plus rows; tighter cells keep a
+     full year on one printed page instead of spilling a row or two onto a second. */
+  table th,
+  table td {
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
   }
 
   @page {
-    margin: 14mm;
+    margin: 10mm;
+    size: landscape;
   }
 }

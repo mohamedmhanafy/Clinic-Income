@@ -15,7 +15,10 @@ export function PeriodBar({ showJump = true }: { showJump?: boolean }) {
   const { t } = useTranslation();
   const [jumpOpen, setJumpOpen] = useState(false);
 
-  const years = Array.from({ length: 9 }, (_, index) => new Date().getFullYear() - 4 + index);
+  // A generous span rather than a narrow window around today - old records and future
+  // planning both belong in the same dropdown.
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 60 }, (_, index) => currentYear + 5 - index);
 
   const arrow =
     'tap flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-line bg-white text-xl font-semibold text-ink';

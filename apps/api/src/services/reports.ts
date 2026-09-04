@@ -203,65 +203,89 @@ export async function getMonthlyReport(
       totalIncome: toMoney(total),
       workingDays,
     },
+    byService: totals.map((row) => ({
+      serviceId: row.service_id,
+      serviceCode: row.code,
+      serviceNameEn: row.name_en,
+      serviceNameAr: row.name_ar,
+      quantity: row.quantity,
+      income: toMoney(row.income),
+    })),
   };
 }
 
 
 interface AnnualRawRow {
-  clinic_id: number;
+  service_id: number;
   month: number;
   income: Prisma.Decimal;
 }
 
-export async function getAnnualReport(year: number): Promise<AnnualReportDto> {
+export async function getAnnualReport(clinicId: number, year: number): Promise<AnnualReportDto> {
+  const clinic = await requireClinic(clinicId);
   const { from, to } = yearRange(year);
 
-  const [clinics, raw] = await Promise.all([
-    prisma.clinic.findMany({ where: { status: 'ACTIVE' }, orderBy: { name: 'asc' } }),
+  const [services, raw] = await Promise.all([
+    prisma.service.findMany({
+      where: { clinicId },
+      orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
+    }),
     prisma.$queryRaw<AnnualRawRow[]>`
-      SELECT a.clinic_id                                AS clinic_id,
+      SELECT l.service_id                               AS service_id,
              EXTRACT(MONTH FROM a.activity_date)::int   AS month,
-             COALESCE(SUM(a.total_income), 0)           AS income
+             COALESCE(SUM(l.line_total), 0)             AS income
         FROM daily_activities a
-       WHERE a.activity_date BETWEEN ${from}::date AND ${to}::date
-       GROUP BY a.clinic_id, month
+        JOIN daily_activity_lines l ON l.activity_id = a.id
+       WHERE a.clinic_id = ${clinicId}
+         AND a.activity_date BETWEEN ${from}::date AND ${to}::date
+       GROUP BY l.service_id, month
        ORDER BY month
     `,
   ]);
 
   const lookup = new Map<string, Prisma.Decimal>();
   for (const row of raw) {
-    lookup.set(`${row.month}:${row.clinic_id}`, row.income);
+    lookup.set(`${row.month}:${row.service_id}`, row.income);
   }
 
-  const clinicTotals = new Map<number, Prisma.Decimal>();
+  const serviceTotalsMap = new Map<number, Prisma.Decimal>();
   const rows = Array.from({ length: 12 }, (_, index) => {
     const month = index + 1;
-    const byClinicEntries: Record<string, string> = {};
+    const byServiceEntries: Record<string, string> = {};
     let monthTotal = new Prisma.Decimal(0);
 
-    for (const clinic of clinics) {
-      const income = lookup.get(`${month}:${clinic.id}`) ?? new Prisma.Decimal(0);
-      byClinicEntries[String(clinic.id)] = toMoney(income);
+    for (const service of services) {
+      const income = lookup.get(`${month}:${service.id}`) ?? new Prisma.Decimal(0);
+      byServiceEntries[String(service.id)] = toMoney(income);
       monthTotal = monthTotal.plus(income);
-      clinicTotals.set(clinic.id, (clinicTotals.get(clinic.id) ?? new Prisma.Decimal(0)).plus(income));
+      serviceTotalsMap.set(
+        service.id,
+        (serviceTotalsMap.get(service.id) ?? new Prisma.Decimal(0)).plus(income),
+      );
     }
 
-    return { month, byClinic: byClinicEntries, total: toMoney(monthTotal) };
+    return { month, byService: byServiceEntries, total: toMoney(monthTotal) };
   });
 
-  const totalsByClinic: Record<string, string> = {};
+  const totalsByService: Record<string, string> = {};
   let grandTotal = new Prisma.Decimal(0);
-  for (const clinic of clinics) {
-    const value = clinicTotals.get(clinic.id) ?? new Prisma.Decimal(0);
-    totalsByClinic[String(clinic.id)] = toMoney(value);
+  for (const service of services) {
+    const value = serviceTotalsMap.get(service.id) ?? new Prisma.Decimal(0);
+    totalsByService[String(service.id)] = toMoney(value);
     grandTotal = grandTotal.plus(value);
   }
 
   return {
+    clinicId,
+    clinicName: clinic.name,
     year,
-    clinics: clinics.map((clinic) => ({ clinicId: clinic.id, clinicName: clinic.name })),
+    services: services.map((service) => ({
+      serviceId: service.id,
+      serviceCode: service.code,
+      serviceNameEn: service.nameEn,
+      serviceNameAr: service.nameAr,
+    })),
     rows,
-    totals: { byClinic: totalsByClinic, total: toMoney(grandTotal) },
+    totals: { byService: totalsByService, total: toMoney(grandTotal) },
   };
 }

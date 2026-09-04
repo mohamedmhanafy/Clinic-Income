@@ -1,22 +1,19 @@
-import { Suspense, lazy } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useAppState } from '../lib/app-state';
-import { useAnnual, useDashboard, useMonthly } from '../lib/queries';
+import { useDashboard } from '../lib/queries';
 import { ApiError } from '../lib/api';
-import { formatCount, formatMoney, monthNameShort } from '../lib/format';
+import { formatCount, formatMoney } from '../lib/format';
 import { Card, EmptyState, ErrorNotice, SectionTitle, Spinner } from '../components/ui';
 import { PeriodBar } from '../components/PeriodBar';
-
-// Recharts lives entirely inside this chunk, so the KPI figures above paint without it.
-const DashboardCharts = lazy(() => import('./DashboardCharts'));
 
 /**
  * Dashboard.
  *
  * On a phone the hierarchy is deliberate: one hero figure the user came to see, then the
- * supporting KPIs two-up, then charts. Everything above the fold answers "how is this
- * month going" without scrolling.
+ * supporting KPIs two-up, then the service breakdown. Everything here answers "how is this
+ * month going" without scrolling; trends and composition live in Reports, where a period can
+ * be picked and compared rather than just glanced at.
  */
 
 function KpiCard({
@@ -48,8 +45,6 @@ export default function Dashboard() {
   const { clinicId, year, month, language } = useAppState();
 
   const summary = useDashboard(clinicId, year, month);
-  const monthly = useMonthly(clinicId, year, month);
-  const annual = useAnnual(year);
 
   if (summary.isPending) return <Spinner />;
 
@@ -66,15 +61,6 @@ export default function Dashboard() {
 
   const data = summary.data;
   const hasIncome = Number(data.totalIncome) > 0;
-
-  const dailyTrend =
-    monthly.data?.rows.map((row) => ({ day: row.dayOfMonth, income: row.totalDailyIncome })) ?? [];
-
-  const monthlyTrend =
-    annual.data?.rows.map((row) => ({
-      label: monthNameShort(row.month, language),
-      income: row.byClinic[String(clinicId)] ?? '0.00',
-    })) ?? [];
 
   return (
     <div className="flex flex-col gap-5">
@@ -129,7 +115,7 @@ export default function Dashboard() {
         </section>
       )}
 
-      {!hasIncome ? (
+      {!hasIncome && (
         <EmptyState
           title={t('common.noData')}
           hint={t('dashboard.emptyHint')}
@@ -142,19 +128,6 @@ export default function Dashboard() {
             </Link>
           }
         />
-      ) : (
-        <Suspense fallback={<Spinner />}>
-          <DashboardCharts
-            dailyTrend={dailyTrend}
-            monthlyTrend={monthlyTrend}
-            examinationIncome={data.examinationIncome}
-            consultationIncome={data.consultationIncome}
-            loading={{
-              daily: monthly.isPending,
-              monthly: annual.isPending,
-            }}
-          />
-        </Suspense>
       )}
     </div>
   );

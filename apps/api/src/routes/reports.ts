@@ -160,18 +160,18 @@ reportsRouter.get('/monthly', validateQuery(monthQuerySchema), async (_req, res)
 /* -------------------------------------------------------------------------- */
 
 function annualSheet(report: AnnualReportDto): ExportSheet {
-  const clinicColumns = report.clinics.map((clinic) => ({
-    header: clinic.clinicName,
-    key: `clinic_${clinic.clinicId}`,
+  const serviceColumns = report.services.map((service) => ({
+    header: service.serviceNameEn,
+    key: `service_${service.serviceId}`,
     width: 16,
     numeric: true,
   }));
 
   return {
-    title: `Annual income ${report.year}`,
+    title: `${report.clinicName} annual income ${report.year}`,
     columns: [
       { header: 'Month', key: 'month', width: 14 },
-      ...clinicColumns,
+      ...serviceColumns,
       { header: 'Total', key: 'total', width: 18, numeric: true },
     ],
     rows: report.rows.map((row) => {
@@ -179,9 +179,9 @@ function annualSheet(report: AnnualReportDto): ExportSheet {
         month: monthName(row.month),
         total: moneyForExport(row.total),
       };
-      for (const clinic of report.clinics) {
-        record[`clinic_${clinic.clinicId}`] = moneyForExport(
-          row.byClinic[String(clinic.clinicId)] ?? '0.00',
+      for (const service of report.services) {
+        record[`service_${service.serviceId}`] = moneyForExport(
+          row.byService[String(service.serviceId)] ?? '0.00',
         );
       }
       return record;
@@ -191,9 +191,9 @@ function annualSheet(report: AnnualReportDto): ExportSheet {
         month: 'Total',
         total: moneyForExport(report.totals.total),
       };
-      for (const clinic of report.clinics) {
-        record[`clinic_${clinic.clinicId}`] = moneyForExport(
-          report.totals.byClinic[String(clinic.clinicId)] ?? '0.00',
+      for (const service of report.services) {
+        record[`service_${service.serviceId}`] = moneyForExport(
+          report.totals.byService[String(service.serviceId)] ?? '0.00',
         );
       }
       return record;
@@ -202,8 +202,12 @@ function annualSheet(report: AnnualReportDto): ExportSheet {
 }
 
 reportsRouter.get('/annual', validateQuery(annualQuerySchema), async (_req, res) => {
-  const { year, format } = getQuery<{ year: number; format: ExportFormat }>(res);
-  const report = await getAnnualReport(year);
+  const { clinicId, year, format } = getQuery<{
+    clinicId: number;
+    year: number;
+    format: ExportFormat;
+  }>(res);
+  const report = await getAnnualReport(clinicId, year);
   if (await sendExport(res, format, annualSheet(report), `annual-income-${year}`)) return;
   res.json(report);
 });

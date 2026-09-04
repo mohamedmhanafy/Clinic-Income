@@ -1,6 +1,4 @@
 import {
-  Bar,
-  BarChart,
   Cell,
   LabelList,
   Line,
@@ -27,8 +25,6 @@ import { formatMoney } from '../lib/format';
  * grow.
  */
 
-const EXAM_COLOR = '#0f8177';
-const CONSULT_COLOR = '#c2762a';
 const BRAND = '#0f8177';
 const GRID = '#e3e7ec';
 const MUTED = '#5b6675';
@@ -52,6 +48,12 @@ function compact(value: number): string {
   if (Math.abs(value) >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
   if (Math.abs(value) >= 1000) return `${(value / 1000).toFixed(value % 1000 === 0 ? 0 : 1)}k`;
   return String(value);
+}
+
+/** A day/month with nothing recorded still gets a point on the line, but not a "0" label
+    crowding every empty spot - only figures worth reading get printed above the line. */
+function compactNonZero(value: number): string {
+  return value === 0 ? '' : compact(value);
 }
 
 /** Clinic names are open-ended in length; cap them so a label can never run into the plot area. */
@@ -90,19 +92,26 @@ export function DailyTrendChart({
 
   return (
     <ResponsiveContainer width="100%" height={190}>
-      <BarChart data={points} margin={{ top: 18, right: 4, bottom: 0, left: 4 }}>
+      <LineChart data={points} margin={{ top: 18, right: 8, bottom: 0, left: 8 }}>
         <XAxis dataKey="day" {...axisProps} interval="preserveStartEnd" minTickGap={12} />
         <YAxis hide />
-        <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(15,129,119,0.08)' }} />
-        <Bar dataKey="income" fill={BRAND} radius={[4, 4, 0, 0]} maxBarSize={26}>
+        <Tooltip content={<ChartTooltip />} />
+        <Line
+          type="monotone"
+          dataKey="income"
+          stroke={BRAND}
+          strokeWidth={2.5}
+          dot={{ r: 3, fill: BRAND }}
+          activeDot={{ r: 5 }}
+        >
           <LabelList
             dataKey="income"
             position="top"
-            formatter={(value: number) => compact(value)}
+            formatter={(value: number) => compactNonZero(value)}
             style={dataLabelStyle}
           />
-        </Bar>
-      </BarChart>
+        </Line>
+      </LineChart>
     </ResponsiveContainer>
   );
 }
@@ -131,7 +140,7 @@ export function MonthlyTrendChart({
           <LabelList
             dataKey="income"
             position="top"
-            formatter={(value: number) => compact(value)}
+            formatter={(value: number) => compactNonZero(value)}
             style={dataLabelStyle}
           />
         </Line>
@@ -142,26 +151,42 @@ export function MonthlyTrendChart({
 
 
 
+/**
+ * One color per service, cycling if there are more services than colors. Fixed order (not
+ * hashed by name) so a given service keeps the same color across renders.
+ */
+const SLICE_COLORS = [
+  '#0f8177',
+  '#c2762a',
+  '#3b82f6',
+  '#a855f7',
+  '#e0475f',
+  '#0ea5a3',
+  '#f59e0b',
+  '#6366f1',
+];
+
 export function CompositionChart({
-  examination,
-  consultation,
+  services,
 }: {
-  examination: string;
-  consultation: string;
+  /** The service's own name, exactly as configured in Settings - not a fixed exam/consult pair. */
+  services: Array<{ name: string; income: string }>;
 }) {
   const { t } = useTranslation();
-  const examValue = money(examination);
-  const consultValue = money(consultation);
-  const total = examValue + consultValue;
+
+  const slices = services
+    .map((service, index) => ({
+      name: service.name,
+      value: money(service.income),
+      color: SLICE_COLORS[index % SLICE_COLORS.length],
+    }))
+    .filter((slice) => slice.value > 0);
+
+  const total = slices.reduce((sum, slice) => sum + slice.value, 0);
 
   if (total <= 0) {
     return <p className="py-8 text-center text-sm text-muted">{t('common.noData')}</p>;
   }
-
-  const slices = [
-    { name: t('dashboard.examinationIncome'), value: examValue, color: EXAM_COLOR },
-    { name: t('dashboard.consultationIncome'), value: consultValue, color: CONSULT_COLOR },
-  ];
 
   return (
     <div className="flex flex-col items-center gap-3 sm:flex-row sm:gap-6">
