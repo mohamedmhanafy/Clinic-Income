@@ -655,11 +655,11 @@ function CustomReport() {
         </div>
       )}
 
-      {report.error && <ErrorNotice error={report.error} />}
+      {report.error && <ErrorNotice message={report.error.message} />}
 
       {report.data && report.data.rows.length === 0 && (
         <Card className="flex h-32 items-center justify-center p-4">
-          <EmptyState message={t('common.noData')} />
+          <EmptyState title={t('common.noData')} />
         </Card>
       )}
 
