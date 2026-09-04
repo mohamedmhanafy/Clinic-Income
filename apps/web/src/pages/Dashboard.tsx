@@ -79,8 +79,8 @@ export default function Dashboard() {
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h1 className="text-xl font-bold text-ink">{data.clinicName}</h1>
-        <p className="text-sm text-muted">{t('dashboard.title')}</p>
+        <h1 className="text-xl font-bold text-ink">{t('dashboard.title')}</h1>
+        <p className="text-sm text-muted">{data.clinicName}</p>
       </div>
 
       <PeriodBar />
