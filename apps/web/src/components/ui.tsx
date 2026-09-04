@@ -330,10 +330,13 @@ export function Sheet({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+      {/* onMouseDown instead of onClick: on mobile, dismissing a native &lt;select&gt; picker
+          fires a synthetic click that can land on the backdrop and close the sheet.
+          mousedown is not synthesised from the picker, so this avoids that. */}
       <button
         type="button"
         aria-label={t('common.close')}
-        onClick={onClose}
+        onMouseDown={onClose}
         className="absolute inset-0 bg-ink/40"
       />
       <div
