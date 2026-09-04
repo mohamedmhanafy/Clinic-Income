@@ -135,6 +135,18 @@ export default function DailyEntry() {
     if (clinicId === null || savable.length === 0) return;
     setFlash(null);
     try {
+      // If all quantities are zero and a record already exists, delete it rather than
+      // saving a blank record - zero counts mean "nothing happened that day".
+      const allZero = savable.every((row) => row.quantity === 0);
+      if (allZero && exists) {
+        const id = entry.data?.activity.id;
+        if (id !== null && id !== undefined) {
+          await remove.mutateAsync(id);
+          setFlash(t('daily.deleted'));
+        }
+        return;
+      }
+
       await save.mutateAsync({
         clinicId,
         date,
