@@ -24,7 +24,7 @@ export function PeriodBar({ showJump = true }: { showJump?: boolean }) {
     'tap flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-line bg-white text-xl font-semibold text-ink';
 
   return (
-    <div className="no-print mb-4 flex flex-col gap-2">
+    <div className="no-print flex flex-col gap-2">
       <div className="flex items-center gap-2">
         <button
           type="button"
