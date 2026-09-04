@@ -397,12 +397,14 @@ function MonthlyReport() {
                       const line = row.lines.find((item) => item.serviceId === service.serviceId);
                       return (
                         <td key={service.serviceId} className="tabnum px-4 py-2.5 text-end">
-                          <Money value={line?.lineTotal ?? '0'} />
-                          {line && line.quantity > 0 && (
-                            <span className="block text-[10px] font-normal text-muted">
-                              ({formatCount(line.quantity)})
-                            </span>
-                          )}
+                          <span className="inline-flex items-baseline gap-1.5 justify-end">
+                            {line && line.quantity > 0 && (
+                              <span className="text-[10px] font-normal text-muted">
+                                ({formatCount(line.quantity)})
+                              </span>
+                            )}
+                            <Money value={line?.lineTotal ?? '0'} />
+                          </span>
                         </td>
                       );
                     })}
