@@ -121,7 +121,6 @@ export default function SettingsClinics() {
             <Input
               id="clinic-name"
               value={form.name}
-              autoFocus
               onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
             />
           </Field>
