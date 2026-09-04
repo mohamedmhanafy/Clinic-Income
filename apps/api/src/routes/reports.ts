@@ -1,11 +1,13 @@
 import { Router, type Response } from 'express';
 import type {
   AnnualReportDto,
+  CustomReportDto,
   ExportFormat,
   MonthlyReportDto,
 } from '@clinic/shared';
 import {
   annualQuerySchema,
+  customQuerySchema,
   dailyReportQuerySchema,
   dashboardQuerySchema,
   monthQuerySchema,
@@ -13,6 +15,7 @@ import {
 import { getQuery, validateQuery } from '../middleware/validate.js';
 import {
   getAnnualReport,
+  getCustomReport,
   getDashboardSummary,
   getMonthlyReport,
 } from '../services/reports.js';
@@ -151,6 +154,53 @@ reportsRouter.get('/monthly', validateQuery(monthQuerySchema), async (_req, res)
     '-',
   );
   if (await sendExport(res, format, monthlySheet(report), filename)) return;
+  res.json(report);
+});
+
+/* -------------------------------------------------------------------------- */
+/* Custom report                                                               */
+/* -------------------------------------------------------------------------- */
+
+function customSheet(report: CustomReportDto): ExportSheet {
+  return {
+    title: `${report.clinicName} ${report.from} to ${report.to}`,
+    columns: [
+      { header: 'Date', key: 'date', width: 14 },
+      { header: 'Exam Count', key: 'examinationCount', width: 12 },
+      { header: 'Exam Income', key: 'examinationIncome', width: 16, numeric: true },
+      { header: 'Consult Count', key: 'consultationCount', width: 14 },
+      { header: 'Consult Income', key: 'consultationIncome', width: 18, numeric: true },
+      { header: 'Daily total', key: 'total', width: 16, numeric: true },
+    ],
+    rows: report.rows.map((row) => ({
+      date: row.date,
+      examinationCount: row.examinationCount,
+      examinationIncome: moneyForExport(row.examinationIncome),
+      consultationCount: row.consultationCount,
+      consultationIncome: moneyForExport(row.consultationIncome),
+      total: moneyForExport(row.totalDailyIncome),
+    })),
+    totals: {
+      date: 'Total',
+      examinationCount: report.totals.examinationCount,
+      examinationIncome: moneyForExport(report.totals.examinationIncome),
+      consultationCount: report.totals.consultationCount,
+      consultationIncome: moneyForExport(report.totals.consultationIncome),
+      total: moneyForExport(report.totals.totalIncome),
+    },
+  };
+}
+
+reportsRouter.get('/custom', validateQuery(customQuerySchema), async (_req, res) => {
+  const { clinicId, from, to, format } = getQuery<{
+    clinicId: number;
+    from: string;
+    to: string;
+    format: ExportFormat;
+  }>(res);
+  const report = await getCustomReport(clinicId, from, to);
+  const filename = `custom-${report.clinicName}-${from}-${to}`.replace(/\s+/g, '-');
+  if (await sendExport(res, format, customSheet(report), filename)) return;
   res.json(report);
 });
 
