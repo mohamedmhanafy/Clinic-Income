@@ -11,7 +11,7 @@ import {
   YAxis,
 } from 'recharts';
 import { useTranslation } from 'react-i18next';
-import { formatMoney } from '../lib/format';
+import { Money } from './ui';
 
 /**
  * Charts.
@@ -76,7 +76,7 @@ function ChartTooltip({
       <p className="text-xs text-muted">{label}</p>
       {payload.map((item, index) => (
         <p key={index} className="tabnum text-sm font-semibold text-ink">
-          {formatMoney(String(item.value))}
+          <Money value={String(item.value)} />
         </p>
       ))}
     </div>
@@ -224,8 +224,8 @@ export function CompositionChart({
             <span className="tabnum text-sm font-semibold text-ink">
               {Math.round((slice.value / total) * 100)}%
             </span>
-            <span className="tabnum w-20 text-end text-sm text-muted">
-              {formatMoney(String(slice.value))}
+            <span className="tabnum shrink-0 text-end text-sm text-muted">
+              <Money value={String(slice.value)} />
             </span>
           </li>
         ))}

@@ -143,7 +143,7 @@ export const en = {
     pricingTitle: 'Pricing',
     currentFees: 'Current fees',
     scheduleChange: 'Schedule a fee change',
-    addFee: 'Add a fee',
+    addFee: 'Add Price',
     newFee: 'New fee',
     effectiveFrom: 'Effective from',
     effectiveTo: 'Effective to',

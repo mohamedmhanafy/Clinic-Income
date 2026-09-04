@@ -9,11 +9,10 @@ import {
   addDaysIso,
   formatCount,
   formatFullDate,
-  formatMoney,
   formatRelative,
   todayIso,
 } from '../lib/format';
-import { Button, Card, ErrorNotice, Notice, Sheet, Spinner, Stepper } from '../components/ui';
+import { Button, Card, ErrorNotice, Money, Notice, Sheet, Spinner, Stepper } from '../components/ui';
 import { DatePicker } from '../components/DatePicker';
 
 /**
@@ -297,13 +296,13 @@ export default function DailyEntry() {
                     <span className="text-muted">
                       {t('common.fee')}{' '}
                       <span className="tabnum font-semibold text-ink">
-                        {fee === null ? '—' : formatMoney(fee)}
+                        {fee === null ? '—' : <Money value={fee} />}
                       </span>
                     </span>
                     <span className="text-muted">
                       {t('common.income')}{' '}
                       <span className="tabnum font-semibold text-ink">
-                        {income === null ? '—' : formatMoney(income)}
+                        {income === null ? '—' : <Money value={income} />}
                       </span>
                     </span>
                   </div>
@@ -319,7 +318,7 @@ export default function DailyEntry() {
             <div className="mb-3 flex items-baseline justify-between">
               <span className="text-sm font-semibold text-muted">{t('daily.dailyTotal')}</span>
               <span className="tabnum text-2xl font-bold text-ink">
-                {formatMoney(String(previewTotal))}
+                <Money value={String(previewTotal)} />
               </span>
             </div>
 

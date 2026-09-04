@@ -5,11 +5,12 @@ import { useAppState } from '../lib/app-state';
 import { useClinics } from '../lib/queries';
 import { EmptyState, Sheet, Spinner } from './ui';
 import {
-  CalendarIcon,
+  ClinicIcon,
   DashboardIcon,
-  MoreIcon,
   PlusIcon,
+  PriceIcon,
   ReportsIcon,
+  ServiceIcon,
   SettingsIcon,
 } from './icons';
 
@@ -35,7 +36,7 @@ function ClinicPicker() {
       <select
         value={clinicId ?? ''}
         onChange={(event) => setClinicId(Number(event.target.value))}
-        className="tap max-w-[45vw] truncate rounded-lg border-0 bg-transparent py-1 ps-1 pe-6 text-base font-semibold text-ink focus:outline-none sm:max-w-none"
+        className="tap max-w-[45vw] truncate rounded-lg border-0 bg-transparent py-1 ps-1 pe-6 text-lg font-semibold text-ink focus:outline-none sm:max-w-none"
       >
         {clinics.map((clinic) => (
           <option key={clinic.id} value={clinic.id}>
@@ -92,6 +93,10 @@ const NAV_LINK_BASE =
 
 function BottomNav({ onMore }: { onMore: () => void }) {
   const { t } = useTranslation();
+  const location = useLocation();
+  // The settings button opens a sheet rather than navigating, so it can't rely on NavLink's
+  // own active detection - it has to check the route itself to highlight correctly.
+  const isSettingsActive = location.pathname.startsWith('/settings');
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     [NAV_LINK_BASE, 'tap flex-1 py-1', isActive ? 'text-brand-700' : 'text-muted'].join(' ');
@@ -132,14 +137,23 @@ function BottomNav({ onMore }: { onMore: () => void }) {
           )}
         </NavLink>
 
-        <NavLink to="/monthly" className={linkClass}>
-          <CalendarIcon />
-          <span>{t('nav.monthlyIncome')}</span>
+        <NavLink to="/reports" className={linkClass}>
+          <ReportsIcon />
+          <span>{t('nav.reports')}</span>
         </NavLink>
 
-        <button type="button" onClick={onMore} className={`${NAV_LINK_BASE} tap flex-1 py-1 text-muted`}>
-          <MoreIcon />
-          <span>{t('nav.more')}</span>
+        <button
+          type="button"
+          onClick={onMore}
+          aria-current={isSettingsActive ? 'page' : undefined}
+          className={[
+            NAV_LINK_BASE,
+            'tap flex-1 py-1',
+            isSettingsActive ? 'text-brand-700' : 'text-muted',
+          ].join(' ')}
+        >
+          <SettingsIcon />
+          <span>{t('nav.settings')}</span>
         </button>
       </div>
       <div className="pb-safe" />
@@ -157,15 +171,14 @@ interface RailLink {
 const RAIL_LINKS: RailLink[] = [
   { to: '/', end: true, labelKey: 'nav.dashboard', Icon: DashboardIcon },
   { to: '/daily', labelKey: 'nav.dailyIncome', Icon: PlusIcon },
-  { to: '/monthly', labelKey: 'nav.monthlyIncome', Icon: CalendarIcon },
   { to: '/reports', labelKey: 'nav.reports', Icon: ReportsIcon },
 ];
 
-const SETTINGS_LINKS = [
-  { to: '/settings/clinics', labelKey: 'nav.clinics' },
-  { to: '/settings/services', labelKey: 'nav.services' },
-  { to: '/settings/pricing', labelKey: 'nav.pricing' },
-] as const;
+const SETTINGS_LINKS: RailLink[] = [
+  { to: '/settings/clinics', labelKey: 'nav.clinics', Icon: ClinicIcon },
+  { to: '/settings/services', labelKey: 'nav.services', Icon: ServiceIcon },
+  { to: '/settings/pricing', labelKey: 'nav.pricing', Icon: PriceIcon },
+];
 
 function SideRail() {
   const { t } = useTranslation();
@@ -197,9 +210,10 @@ function SideRail() {
           {t('nav.settings')}
         </p>
         <nav className="flex flex-col gap-1">
-          {SETTINGS_LINKS.map(({ to, labelKey }) => (
+          {SETTINGS_LINKS.map(({ to, labelKey, Icon }) => (
             <NavLink key={to} to={to} className={linkClass}>
-              <span className="ps-8">{t(labelKey)}</span>
+              <Icon className="h-5 w-5" />
+              <span>{t(labelKey)}</span>
             </NavLink>
           ))}
         </nav>
@@ -212,33 +226,36 @@ function SideRail() {
 function MoreSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const go = (to: string) => {
     onClose();
     navigate(to);
   };
 
-  const item =
-    'tap flex w-full items-center justify-between rounded-xl border border-line px-4 py-3 text-start text-base font-medium text-ink';
-
   return (
-    <Sheet open={open} onClose={onClose} title={t('nav.more')}>
+    <Sheet open={open} onClose={onClose} title={t('nav.settings')}>
       <div className="flex flex-col gap-2">
-        <button type="button" className={item} onClick={() => go('/reports')}>
-          <span className="flex items-center gap-3">
-            <ReportsIcon />
-            {t('nav.reports')}
-          </span>
-        </button>
-
-        <p className="mt-3 px-1 text-xs font-semibold tracking-wide text-muted uppercase">
-          {t('nav.settings')}
-        </p>
-        {SETTINGS_LINKS.map(({ to, labelKey }) => (
-          <button key={to} type="button" className={item} onClick={() => go(to)}>
-            {t(labelKey)}
-          </button>
-        ))}
+        {SETTINGS_LINKS.map(({ to, labelKey, Icon }) => {
+          const isActive = location.pathname === to;
+          return (
+            <button
+              key={to}
+              type="button"
+              aria-current={isActive ? 'page' : undefined}
+              className={[
+                'tap flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-start text-base font-medium transition-colors',
+                isActive
+                  ? 'border-brand-200 bg-brand-50 text-brand-700'
+                  : 'border-line text-ink hover:bg-canvas',
+              ].join(' ')}
+              onClick={() => go(to)}
+            >
+              <Icon className={`h-5 w-5 shrink-0 ${isActive ? 'text-brand-700' : 'text-muted'}`} />
+              {t(labelKey)}
+            </button>
+          );
+        })}
       </div>
     </Sheet>
   );

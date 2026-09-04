@@ -14,16 +14,48 @@ import { ar, en } from '../i18n/locales';
  */
 const NUMBER_LOCALE = 'en-US';
 
-/** Formats "4000.00" as "4,000" and "4000.50" as "4,000.50". */
-export function formatMoney(value: string | null | undefined): string {
-  if (value === null || value === undefined) return '-';
+const CURRENCY_LABEL: Record<Language, string> = {
+  en: 'EGP',
+  ar: 'جنيه',
+};
+
+/** The <html lang> that applyLanguage() keeps in sync, read here so callers that already
+    have `language` in scope can pass it and everyone else still gets the right label. */
+function currentLanguage(): Language {
+  return document.documentElement.lang === 'ar' ? 'ar' : 'en';
+}
+
+/** "EGP" in English, "جنيه" in Arabic - exported so chart labels and anything else that
+    builds its own money string (rather than going through formatMoney) can still tag it. */
+export function currencyLabel(language: Language = currentLanguage()): string {
+  return CURRENCY_LABEL[language];
+}
+
+/** The amount and currency label as separate strings, for callers (e.g. <Money>) that want
+    to style the currency word smaller than the figure it labels. */
+export function formatMoneyParts(
+  value: string | null | undefined,
+  language: Language = currentLanguage(),
+): { amount: string; currency: string } | null {
+  if (value === null || value === undefined) return null;
   const amount = Number(value);
-  if (!Number.isFinite(amount)) return String(value);
+  if (!Number.isFinite(amount)) return { amount: String(value), currency: '' };
   const hasFraction = Math.abs(amount % 1) > 0;
-  return new Intl.NumberFormat(NUMBER_LOCALE, {
+  const formatted = new Intl.NumberFormat(NUMBER_LOCALE, {
     minimumFractionDigits: hasFraction ? 2 : 0,
     maximumFractionDigits: 2,
   }).format(amount);
+  return { amount: formatted, currency: CURRENCY_LABEL[language] };
+}
+
+/** Formats "4000.00" as "4,000 EGP" and "4000.50" as "4,000.50 EGP" ("جنيه" in Arabic). */
+export function formatMoney(
+  value: string | null | undefined,
+  language: Language = currentLanguage(),
+): string {
+  const parts = formatMoneyParts(value, language);
+  if (!parts) return '-';
+  return parts.currency ? `${parts.amount} ${parts.currency}` : parts.amount;
 }
 
 export function formatCount(value: number | null | undefined): string {

@@ -8,7 +8,7 @@ import {
   useServices,
 } from '../lib/queries';
 import { ApiError } from '../lib/api';
-import { formatFullDate, formatMoney, todayIso } from '../lib/format';
+import { formatFullDate, todayIso } from '../lib/format';
 import {
   Button,
   Card,
@@ -16,6 +16,7 @@ import {
   ErrorNotice,
   Field,
   Input,
+  Money,
   Notice,
   SectionTitle,
   Select,
@@ -93,7 +94,7 @@ export default function SettingsPricing() {
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-xl font-bold text-ink">{t('settings.pricingTitle')}</h1>
         <Button onClick={() => openSheet()} disabled={activeServices.length === 0}>
-          {t('common.add')}
+          {t('settings.addFee')}
         </Button>
       </div>
 
@@ -119,7 +120,7 @@ export default function SettingsPricing() {
                     </span>
 
                     <span className="tabnum text-lg font-bold text-ink">
-                      {price ? formatMoney(price.fee) : '—'}
+                      {price ? <Money value={price.fee} /> : '—'}
                     </span>
 
                     <button
@@ -127,7 +128,7 @@ export default function SettingsPricing() {
                       onClick={() => openSheet(service.id)}
                       className="tap rounded-lg px-2 text-sm font-semibold text-brand-700"
                     >
-                      {price ? t('common.edit') : t('common.add')}
+                      {price ? t('common.edit') : t('settings.addFee')}
                     </button>
                   </li>
                 ))}
@@ -157,7 +158,7 @@ export default function SettingsPricing() {
                         </span>
                       </span>
                       <span className="tabnum font-semibold text-ink">
-                        {formatMoney(price.fee)}
+                        {<Money value={price.fee} />}
                       </span>
                     </li>
                   ))}

@@ -1,6 +1,8 @@
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from 'react';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ChevronIcon } from './icons';
+import { formatMoneyParts } from '../lib/format';
 
 /**
  * Shared UI primitives.
@@ -49,6 +51,27 @@ export function Button({
         className,
       ].join(' ')}
     />
+  );
+}
+
+/**
+ * A money figure with its currency word set smaller and lighter than the amount, for the
+ * large headline numbers (the dashboard hero, KPI cards) where a same-size "EGP" reads as
+ * heavier than the figure it's labeling. Small text elsewhere just uses formatMoney directly
+ * - at 14px the two are close enough in weight that splitting them isn't worth it.
+ */
+export function Money({ value, className = '' }: { value: string | null | undefined; className?: string }) {
+  const parts = formatMoneyParts(value);
+  if (!parts) return <span className={className}>-</span>;
+  return (
+    <span className={className}>
+      {parts.amount}
+      {/* opacity, not a fixed gray: this sits on both light KPI cards and the dark brand-600
+          hero card, and opacity lightens correctly against either background. */}
+      {parts.currency && (
+        <span className="ms-1 text-[0.55em] font-normal opacity-60">{parts.currency}</span>
+      )}
+    </span>
   );
 }
 
@@ -119,9 +142,14 @@ export function Select({
   ...props
 }: SelectHTMLAttributes<HTMLSelectElement>) {
   return (
-    <select {...props} className={`${CONTROL_CLASS} appearance-none pe-9 ${className}`}>
-      {children}
-    </select>
+    <div className="relative">
+      <select {...props} className={`${CONTROL_CLASS} appearance-none pe-9 ${className}`}>
+        {children}
+      </select>
+      {/* appearance-none above drops the native arrow, so this replaces it - otherwise the
+          control gives no visual cue that it opens a list at all. */}
+      <ChevronIcon className="pointer-events-none absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 rotate-90 text-muted" />
+    </div>
   );
 }
 

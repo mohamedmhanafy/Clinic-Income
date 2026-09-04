@@ -12,7 +12,6 @@ import { useClinics } from './lib/queries';
  */
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const DailyEntry = lazy(() => import('./pages/DailyEntry'));
-const Monthly = lazy(() => import('./pages/Monthly'));
 const Reports = lazy(() => import('./pages/Reports'));
 const SettingsClinics = lazy(() => import('./pages/SettingsClinics'));
 const SettingsServices = lazy(() => import('./pages/SettingsServices'));
@@ -44,7 +43,6 @@ export default function App() {
         <Route element={<AppShell />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/daily" element={<DailyEntry />} />
-          <Route path="/monthly" element={<Monthly />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/settings/clinics" element={<SettingsClinics />} />
           <Route path="/settings/services" element={<SettingsServices />} />

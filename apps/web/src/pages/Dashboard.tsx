@@ -1,10 +1,11 @@
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useAppState } from '../lib/app-state';
 import { useDashboard } from '../lib/queries';
 import { ApiError } from '../lib/api';
-import { formatCount, formatMoney } from '../lib/format';
-import { Card, EmptyState, ErrorNotice, SectionTitle, Spinner } from '../components/ui';
+import { formatCount } from '../lib/format';
+import { Card, EmptyState, ErrorNotice, Money, SectionTitle, Spinner } from '../components/ui';
 import { PeriodBar } from '../components/PeriodBar';
 
 /**
@@ -16,24 +17,9 @@ import { PeriodBar } from '../components/PeriodBar';
  * be picked and compared rather than just glanced at.
  */
 
-function KpiCard({
-  label,
-  value,
-  tone = 'default',
-}: {
-  label: string;
-  value: string;
-  tone?: 'default' | 'exam' | 'consult';
-}) {
-  const accent =
-    tone === 'exam'
-      ? 'border-s-4 border-s-[--color-exam]'
-      : tone === 'consult'
-        ? 'border-s-4 border-s-[--color-consult]'
-        : '';
-
+function KpiCard({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <Card className={`p-3.5 ${accent}`}>
+    <Card className="p-3.5">
       <p className="text-xs font-medium text-muted">{label}</p>
       <p className="tabnum mt-1 text-xl font-bold text-ink">{value}</p>
     </Card>
@@ -73,47 +59,31 @@ export default function Dashboard() {
       {/* Hero KPI: the single number the screen exists to show. */}
       <Card className="bg-brand-600 p-5 text-white">
         <p className="text-sm font-medium opacity-90">{t('dashboard.totalIncome')}</p>
-        <p className="tabnum mt-1 text-4xl font-bold">{formatMoney(data.totalIncome)}</p>
+        <p className="tabnum mt-1 text-4xl font-bold">
+          <Money value={data.totalIncome} />
+        </p>
       </Card>
 
-      <div className="grid grid-cols-2 gap-3">
-        <KpiCard
-          label={t('dashboard.examinationIncome')}
-          value={formatMoney(data.examinationIncome)}
-          tone="exam"
-        />
-        <KpiCard
-          label={t('dashboard.consultationIncome')}
-          value={formatMoney(data.consultationIncome)}
-          tone="consult"
-        />
-        <KpiCard label={t('dashboard.examinations')} value={formatCount(data.examinationCount)} />
-        <KpiCard label={t('dashboard.consultations')} value={formatCount(data.consultationCount)} />
-      </div>
+      {/* One horizontal pair per service - income and count side by side - named exactly as
+          configured in Settings > Services rather than a fixed examination/consultation
+          pair a clinic may not even have. */}
+      {data.byService.length > 0 && (
+        <div className="flex flex-col gap-3">
+          {data.byService.map((row) => (
+            <div key={row.serviceId}>
+              <p className="mb-1.5 truncate text-sm font-semibold text-ink">
+                {language === 'ar' ? row.serviceNameAr : row.serviceNameEn}
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <KpiCard label={t('common.income')} value={<Money value={row.income} />} />
+                <KpiCard label={t('common.count')} value={formatCount(row.quantity)} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <KpiCard label={t('dashboard.workingDays')} value={formatCount(data.workingDays)} />
-
-      {/* Any service beyond the seeded two appears here automatically. */}
-      {data.byService.length > 2 && (
-        <section>
-          <SectionTitle>{t('common.service')}</SectionTitle>
-          <Card>
-            <ul className="divide-y divide-line">
-              {data.byService.map((row) => (
-                <li key={row.serviceId} className="flex items-center justify-between gap-3 p-3.5">
-                  <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink">
-                    {language === 'ar' ? row.serviceNameAr : row.serviceNameEn}
-                  </span>
-                  <span className="tabnum text-sm text-muted">{formatCount(row.quantity)}</span>
-                  <span className="tabnum w-24 text-end text-sm font-semibold text-ink">
-                    {formatMoney(row.income)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </Card>
-        </section>
-      )}
 
       {!hasIncome && (
         <EmptyState
