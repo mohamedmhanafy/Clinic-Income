@@ -24,6 +24,8 @@ export const keys = {
     ['dashboard', clinicId, year, month] as const,
   monthly: (clinicId: number, year: number, month: number) =>
     ['monthly', clinicId, year, month] as const,
+  custom: (clinicId: number, from: string, to: string) =>
+    ['custom', clinicId, from, to] as const,
   annual: (clinicId: number, year: number) => ['annual', clinicId, year] as const,
 };
 
@@ -76,6 +78,14 @@ export function useMonthly(clinicId: number | null, year: number, month: number)
   });
 }
 
+export function useCustomReport(clinicId: number | null, from: string, to: string) {
+  return useQuery({
+    queryKey: keys.custom(clinicId ?? 0, from, to),
+    queryFn: () => api.reports.custom(clinicId as number, from, to),
+    enabled: clinicId !== null && !!from && !!to,
+  });
+}
+
 export function useAnnual(clinicId: number | null, year: number) {
   return useQuery({
     queryKey: keys.annual(clinicId ?? 0, year),
@@ -88,7 +98,7 @@ export function useAnnual(clinicId: number | null, year: number) {
 function useInvalidateIncome() {
   const client = useQueryClient();
   return () => {
-    for (const key of ['daily', 'dashboard', 'monthly', 'annual']) {
+    for (const key of ['daily', 'dashboard', 'monthly', 'custom', 'annual']) {
       void client.invalidateQueries({ queryKey: [key] });
     }
   };

@@ -3,6 +3,7 @@ import type {
   ClinicCreateInput,
   ClinicDto,
   ClinicUpdateInput,
+  CustomReportDto,
   DailyEntryViewDto,
   DashboardSummaryDto,
   EffectivePriceDto,
@@ -134,6 +135,8 @@ export const api = {
       request<DashboardSummaryDto>(`/api/dashboard/summary?${query({ clinicId, year, month })}`),
     monthly: (clinicId: number, year: number, month: number) =>
       request<MonthlyReportDto>(`/api/reports/monthly?${query({ clinicId, year, month })}`),
+    custom: (clinicId: number, from: string, to: string) =>
+      request<CustomReportDto>(`/api/reports/custom?${query({ clinicId, from, to })}`),
     annual: (clinicId: number, year: number) =>
       request<AnnualReportDto>(`/api/reports/annual?${query({ clinicId, year })}`),
   },
