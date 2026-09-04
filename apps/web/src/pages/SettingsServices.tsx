@@ -147,31 +147,10 @@ export default function SettingsServices() {
                 onChange={(event) => setForm((current) => ({ ...current, sortOrder: Number(event.target.value.replace(/[^\d]/g, '') || 0) }))} />
             </Field>
             <Field label={t('common.status')} htmlFor="service-status">
-              <div
-                role="group"
-                aria-label={t('common.status')}
-                className="flex overflow-hidden rounded-xl border border-line"
-              >
-                {(['ACTIVE', 'INACTIVE'] as const).map((value) => (
-                  <button
-                    key={value}
-                    id={value === 'ACTIVE' ? 'service-status' : undefined}
-                    type="button"
-                    onClick={() => setForm((current) => ({ ...current, status: value }))}
-                    aria-pressed={form.status === value}
-                    className={[
-                      'tap flex-1 py-3 text-sm font-semibold transition-colors',
-                      form.status === value
-                        ? value === 'ACTIVE'
-                          ? 'bg-brand-600 text-white'
-                          : 'bg-[--color-danger] text-white'
-                        : 'bg-white text-muted hover:bg-canvas',
-                    ].join(' ')}
-                  >
-                    {value === 'ACTIVE' ? t('common.active') : t('common.inactive')}
-                  </button>
-                ))}
-              </div>
+              <Select id="service-status" value={form.status} onChange={(event) => setForm((current) => ({ ...current, status: event.target.value as 'ACTIVE' | 'INACTIVE' }))}>
+                <option value="ACTIVE">{t('common.active')}</option>
+                <option value="INACTIVE">{t('common.inactive')}</option>
+              </Select>
             </Field>
           </div>
 
