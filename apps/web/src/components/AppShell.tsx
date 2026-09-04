@@ -132,9 +132,9 @@ function BottomNav({ onMore }: { onMore: () => void }) {
           )}
         </NavLink>
 
-        <NavLink to="/reports" className={linkClass}>
+        <NavLink to="/monthly" className={linkClass}>
           <CalendarIcon />
-          <span>{t('nav.reports')}</span>
+          <span>{t('nav.monthlyIncome')}</span>
         </NavLink>
 
         <button type="button" onClick={onMore} className={`${NAV_LINK_BASE} tap flex-1 py-1 text-muted`}>
@@ -157,8 +157,8 @@ interface RailLink {
 const RAIL_LINKS: RailLink[] = [
   { to: '/', end: true, labelKey: 'nav.dashboard', Icon: DashboardIcon },
   { to: '/daily', labelKey: 'nav.dailyIncome', Icon: PlusIcon },
-  { to: '/monthly', labelKey: 'nav.monthlyIncome', Icon: ReportsIcon },
-  { to: '/reports', labelKey: 'nav.reports', Icon: CalendarIcon },
+  { to: '/monthly', labelKey: 'nav.monthlyIncome', Icon: CalendarIcon },
+  { to: '/reports', labelKey: 'nav.reports', Icon: ReportsIcon },
 ];
 
 const SETTINGS_LINKS = [
@@ -224,10 +224,10 @@ function MoreSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
     <Sheet open={open} onClose={onClose} title={t('nav.more')}>
       <div className="flex flex-col gap-2">
-        <button type="button" className={item} onClick={() => go('/monthly')}>
+        <button type="button" className={item} onClick={() => go('/reports')}>
           <span className="flex items-center gap-3">
             <ReportsIcon />
-            {t('nav.monthlyIncome')}
+            {t('nav.reports')}
           </span>
         </button>
 
