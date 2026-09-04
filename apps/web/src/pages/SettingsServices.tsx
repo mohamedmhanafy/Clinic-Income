@@ -146,11 +146,26 @@ export default function SettingsServices() {
               <Input id="service-order" type="number" inputMode="numeric" min={0} value={String(form.sortOrder)}
                 onChange={(event) => setForm((current) => ({ ...current, sortOrder: Number(event.target.value.replace(/[^\d]/g, '') || 0) }))} />
             </Field>
-            <Field label={t('common.status')} htmlFor="service-status">
-              <Select id="service-status" value={form.status} onChange={(event) => setForm((current) => ({ ...current, status: event.target.value as 'ACTIVE' | 'INACTIVE' }))}>
-                <option value="ACTIVE">{t('common.active')}</option>
-                <option value="INACTIVE">{t('common.inactive')}</option>
-              </Select>
+            <Field label={t('common.status')}>
+              <div className="flex overflow-hidden rounded-xl border border-line">
+                {(['ACTIVE', 'INACTIVE'] as const).map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setForm((current) => ({ ...current, status: value }))}
+                    className={[
+                      'tap flex-1 py-3 text-sm font-semibold transition-colors',
+                      form.status === value
+                        ? value === 'ACTIVE'
+                          ? 'bg-brand-600 text-white'
+                          : 'bg-[--color-danger] text-white'
+                        : 'bg-white text-muted',
+                    ].join(' ')}
+                  >
+                    {value === 'ACTIVE' ? t('common.active') : t('common.inactive')}
+                  </button>
+                ))}
+              </div>
             </Field>
           </div>
 
