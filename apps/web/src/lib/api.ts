@@ -70,7 +70,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return payload as T;
 }
 
-function query(params: Record<string, string | number | undefined>): string {
+function query(params: Record<string, string | number | boolean | undefined>): string {
   const search = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
     if (value !== undefined && value !== '') search.set(key, String(value));
@@ -88,7 +88,8 @@ export interface DailySavePayload {
 
 export const api = {
   clinics: {
-    list: () => request<ClinicDto[]>('/api/clinics'),
+    list: (includeInactive?: boolean) =>
+      request<ClinicDto[]>(`/api/clinics?${query({ includeInactive })}`),
     create: (input: ClinicCreateInput) =>
       request<ClinicDto>('/api/clinics', { method: 'POST', body: JSON.stringify(input) }),
     update: (id: number, input: ClinicUpdateInput) =>
@@ -97,7 +98,8 @@ export const api = {
   },
 
   services: {
-    list: (clinicId: number) => request<ServiceDto[]>(`/api/services?${query({ clinicId })}`),
+    list: (clinicId: number, includeInactive?: boolean) =>
+      request<ServiceDto[]>(`/api/services?${query({ clinicId, includeInactive })}`),
     create: (input: ServiceCreateInput) =>
       request<ServiceDto>('/api/services', { method: 'POST', body: JSON.stringify(input) }),
     update: (id: number, input: ServiceUpdateInput) =>

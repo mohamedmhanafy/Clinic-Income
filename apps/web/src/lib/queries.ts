@@ -14,8 +14,9 @@ import { api, type DailySavePayload } from './api';
  * bug even when the stored data is correct.
  */
 export const keys = {
-  clinics: ['clinics'] as const,
-  services: (clinicId: number) => ['services', clinicId] as const,
+  clinics: (includeInactive = false) => ['clinics', includeInactive] as const,
+  services: (clinicId: number, includeInactive = false) =>
+    ['services', clinicId, includeInactive] as const,
   prices: (clinicId: number) => ['prices', clinicId] as const,
   effectivePrices: (clinicId: number, date: string) => ['effective-prices', clinicId, date] as const,
   daily: (clinicId: number, date: string) => ['daily', clinicId, date] as const,
@@ -27,14 +28,18 @@ export const keys = {
   annual: (year: number) => ['annual', year] as const,
 };
 
-export function useClinics() {
-  return useQuery({ queryKey: keys.clinics, queryFn: api.clinics.list, staleTime: 60_000 });
+export function useClinics(includeInactive = false) {
+  return useQuery({
+    queryKey: keys.clinics(includeInactive),
+    queryFn: () => api.clinics.list(includeInactive),
+    staleTime: 60_000,
+  });
 }
 
-export function useServices(clinicId: number | null) {
+export function useServices(clinicId: number | null, includeInactive = false) {
   return useQuery({
-    queryKey: keys.services(clinicId ?? 0),
-    queryFn: () => api.services.list(clinicId as number),
+    queryKey: keys.services(clinicId ?? 0, includeInactive),
+    queryFn: () => api.services.list(clinicId as number, includeInactive),
     enabled: clinicId !== null,
     staleTime: 60_000,
   });
@@ -113,7 +118,7 @@ export function useCreateClinic() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (input: ClinicCreateInput) => api.clinics.create(input),
-    onSuccess: () => void client.invalidateQueries({ queryKey: keys.clinics }),
+    onSuccess: () => void client.invalidateQueries({ queryKey: ['clinics'] }),
   });
 }
 
@@ -122,7 +127,7 @@ export function useUpdateClinic() {
   return useMutation({
     mutationFn: ({ id, input }: { id: number; input: ClinicUpdateInput }) =>
       api.clinics.update(id, input),
-    onSuccess: () => void client.invalidateQueries({ queryKey: keys.clinics }),
+    onSuccess: () => void client.invalidateQueries({ queryKey: ['clinics'] }),
   });
 }
 
@@ -149,7 +154,7 @@ export function useDeleteClinic() {
   return useMutation({
     mutationFn: (id: number) => api.clinics.remove(id),
     onSuccess: () => {
-      void client.invalidateQueries({ queryKey: keys.clinics });
+      void client.invalidateQueries({ queryKey: ['clinics'] });
       // Cascade deletes all activities, so income views must be refreshed.
       invalidate();
     },

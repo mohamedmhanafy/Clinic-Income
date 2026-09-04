@@ -62,6 +62,7 @@ async function serviceTotals(
               WHERE a.clinic_id = ${clinicId}
                 AND a.activity_date BETWEEN ${from}::date AND ${to}::date
            ) pl ON pl.service_id = s.id
+     WHERE s.clinic_id = ${clinicId}
      GROUP BY s.id, s.code, s.name_en, s.name_ar, s.sort_order
      ORDER BY s.sort_order, s.id
   `;
@@ -228,6 +229,7 @@ export async function getComparisonReport(from: string, to: string): Promise<Com
             AND a.activity_date BETWEEN ${from}::date AND ${to}::date
       LEFT JOIN daily_activity_lines l ON l.activity_id = a.id
       LEFT JOIN services s             ON s.id = l.service_id
+     WHERE c.status = 'ACTIVE'
      GROUP BY c.id, c.name, s.code
      ORDER BY c.name
   `;
@@ -276,7 +278,7 @@ export async function getAnnualReport(year: number): Promise<AnnualReportDto> {
   const { from, to } = yearRange(year);
 
   const [clinics, raw] = await Promise.all([
-    prisma.clinic.findMany({ orderBy: { name: 'asc' } }),
+    prisma.clinic.findMany({ where: { status: 'ACTIVE' }, orderBy: { name: 'asc' } }),
     prisma.$queryRaw<AnnualRawRow[]>`
       SELECT a.clinic_id                                AS clinic_id,
              EXTRACT(MONTH FROM a.activity_date)::int   AS month,

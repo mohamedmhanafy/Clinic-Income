@@ -25,7 +25,7 @@ import {
  */
 export default function SettingsClinics() {
   const { t } = useTranslation();
-  const clinics = useClinics();
+  const clinics = useClinics(true);
   const create = useCreateClinic();
   const update = useUpdateClinic();
 
@@ -84,8 +84,6 @@ export default function SettingsClinics() {
         <h1 className="text-xl font-bold text-ink">{t('settings.clinicsTitle')}</h1>
         <Button onClick={openCreate}>{t('settings.addClinic')}</Button>
       </div>
-
-      <Notice tone="info">{t('settings.sampleData')}</Notice>
 
       {clinics.isPending && <Spinner />}
       {clinics.isError && <ErrorNotice message={t('common.somethingWrong')} />}

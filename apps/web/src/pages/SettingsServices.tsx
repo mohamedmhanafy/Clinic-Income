@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 import { useAppState } from '../lib/app-state';
 import type { ServiceDto } from '@clinic/shared';
 import { useClinics, useCreateService, useDeleteService, useServices, useUpdateService, useSchedulePriceChange } from '../lib/queries';
@@ -21,11 +20,10 @@ import {
 
 export default function SettingsServices() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { clinicId, setClinicId } = useAppState();
   
   const clinics = useClinics();
-  const services = useServices(clinicId);
+  const services = useServices(clinicId, true);
   const create = useCreateService();
   const update = useUpdateService();
   const schedule = useSchedulePriceChange(clinicId);
@@ -82,7 +80,6 @@ export default function SettingsServices() {
         }
         
         close();
-        void navigate('/settings/pricing');
       }
     } catch (err) {
       if (err instanceof ApiError && create.isSuccess) {
@@ -102,7 +99,6 @@ export default function SettingsServices() {
         <Button onClick={openCreate} disabled={!clinicId}>{t('settings.addService')}</Button>
       </div>
 
-      <Notice tone="info">{t('settings.sampleData')}</Notice>
       {services.isPending && <Spinner />}
 
       {services.data && (

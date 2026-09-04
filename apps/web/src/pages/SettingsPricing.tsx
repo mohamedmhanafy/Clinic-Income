@@ -85,6 +85,7 @@ export default function SettingsPricing() {
 
   const scheduleError = schedule.error instanceof ApiError ? schedule.error.message : null;
   const feeValid = /^\d+(\.\d{1,2})?$/.test(fee.trim());
+  const hasCurrentPrice = currentFees.some((row) => row.service.id === serviceId && row.price !== null);
 
   return (
     <div className="flex flex-col gap-5">
@@ -94,8 +95,6 @@ export default function SettingsPricing() {
           {t('common.add')}
         </Button>
       </div>
-
-      <Notice tone="info">{t('settings.sampleData')}</Notice>
 
       {(prices.isPending || services.isPending) && <Spinner />}
 
@@ -127,7 +126,7 @@ export default function SettingsPricing() {
                       onClick={() => openSheet(service.id)}
                       className="tap rounded-lg px-2 text-sm font-semibold text-brand-700"
                     >
-                      {t('common.edit')}
+                      {price ? t('common.edit') : t('common.add')}
                     </button>
                   </li>
                 ))}
@@ -168,7 +167,11 @@ export default function SettingsPricing() {
         </>
       )}
 
-      <Sheet open={open} onClose={() => setOpen(false)} title={t('settings.scheduleChange')}>
+      <Sheet
+        open={open}
+        onClose={() => setOpen(false)}
+        title={hasCurrentPrice ? t('settings.scheduleChange') : t('settings.addFee')}
+      >
         <div className="flex flex-col gap-4">
           <Field label={t('common.service')} htmlFor="price-service">
             <Select

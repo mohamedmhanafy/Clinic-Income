@@ -13,7 +13,7 @@ function toClinicDto(clinic: Clinic): ClinicDto {
   };
 }
 
-export async function listClinics(includeInactive = true): Promise<ClinicDto[]> {
+export async function listClinics(includeInactive = false): Promise<ClinicDto[]> {
   const clinics = await prisma.clinic.findMany({
     where: includeInactive ? {} : { status: 'ACTIVE' },
     orderBy: [{ name: 'asc' }],

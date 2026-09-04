@@ -166,41 +166,43 @@ export default function DailyEntry() {
         )}
       </header>
 
-      {/* Date picker: arrows for the common nudge, native picker for a jump. */}
-      <Card className="flex items-center gap-2 p-2">
-        <button
-          type="button"
-          onClick={() => stepDate(-1)}
-          aria-label="previous day"
-          className="tap flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-xl font-semibold text-ink"
-        >
-          <span aria-hidden="true" className="rtl:rotate-180">
-            &#8249;
-          </span>
-        </button>
+      {/*
+       * Date picker: arrows for the common nudge, native picker for a jump. Pinned to LTR so
+       * "previous" and "next" always land on the same side with the same arrow, in both
+       * languages - chronology reads left-to-right here regardless of UI direction.
+       */}
+      <div dir="ltr">
+        <Card className="flex items-center gap-2 p-2">
+          <button
+            type="button"
+            onClick={() => stepDate(-1)}
+            aria-label="previous day"
+            className="tap flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-xl font-semibold text-ink"
+          >
+            <span aria-hidden="true">&#8249;</span>
+          </button>
 
-        <label className="flex min-w-0 flex-1 flex-col items-center">
-          <span className="sr-only">{t('common.date')}</span>
-          <span className="text-base font-semibold text-ink">{formatFullDate(date, language)}</span>
-          <input
-            type="date"
-            value={date}
-            onChange={(event) => event.target.value && setDate(event.target.value)}
-            className="mt-0.5 bg-transparent text-center text-xs text-muted focus:outline-none"
-          />
-        </label>
+          <label className="flex min-w-0 flex-1 flex-col items-center">
+            <span className="sr-only">{t('common.date')}</span>
+            <span className="text-base font-semibold text-ink">{formatFullDate(date, language)}</span>
+            <input
+              type="date"
+              value={date}
+              onChange={(event) => event.target.value && setDate(event.target.value)}
+              className="mt-0.5 bg-transparent text-center text-xs text-muted focus:outline-none"
+            />
+          </label>
 
-        <button
-          type="button"
-          onClick={() => stepDate(1)}
-          aria-label="next day"
-          className="tap flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-xl font-semibold text-ink"
-        >
-          <span aria-hidden="true" className="rtl:rotate-180">
-            &#8250;
-          </span>
-        </button>
-      </Card>
+          <button
+            type="button"
+            onClick={() => stepDate(1)}
+            aria-label="next day"
+            className="tap flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-xl font-semibold text-ink"
+          >
+            <span aria-hidden="true">&#8250;</span>
+          </button>
+        </Card>
+      </div>
 
       {date !== todayIso() && (
         <button

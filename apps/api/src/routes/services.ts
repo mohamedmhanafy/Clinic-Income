@@ -17,7 +17,7 @@ const listQuery = z.object({
   clinicId: idSchema,
   includeInactive: z
     .enum(['true', 'false'])
-    .default('true')
+    .default('false')
     .transform((value) => value === 'true'),
 });
 

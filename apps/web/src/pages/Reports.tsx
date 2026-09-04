@@ -15,6 +15,7 @@ import {
 import { Card, EmptyState, ErrorNotice, Field, Input, SectionTitle, Spinner } from '../components/ui';
 import { PeriodBar } from '../components/PeriodBar';
 import { ExportBar } from '../components/ExportBar';
+import { ComparisonColumnChart } from '../components/charts';
 import { ChevronIcon } from '../components/icons';
 
 /**
@@ -29,7 +30,9 @@ type Tab = 'daily' | 'monthly' | 'comparison' | 'annual';
 
 function Tabs({ value, onChange }: { value: Tab; onChange: (tab: Tab) => void }) {
   const { t } = useTranslation();
-  const tabs: Tab[] = ['daily', 'monthly', 'comparison', 'annual'];
+  // Period reports ascend by scope (day, month, year); comparison is a different kind of
+  // report - across clinics rather than across time - so it sits apart at the end.
+  const tabs: Tab[] = ['daily', 'monthly', 'annual', 'comparison'];
 
   return (
     <div className="no-print -mx-4 overflow-x-auto px-4">
@@ -235,40 +238,21 @@ function ComparisonReport() {
 
       {report.data && (
         <>
-          {/* Phone: one card per clinic instead of a four-column table. */}
-          <ul className="print-cards flex flex-col gap-2 lg:hidden">
-            {report.data.rows.map((row) => (
-              <li key={row.clinicId}>
-                <Card>
-                  <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
-                    <span className="font-semibold text-ink">{row.clinicName}</span>
-                    <span className="tabnum font-bold text-ink">{formatMoney(row.totalIncome)}</span>
-                  </div>
-                  <div className="divide-y divide-line">
-                    <StatRow
-                      label={t('dashboard.examinations')}
-                      value={formatCount(row.examinationCount)}
-                    />
-                    <StatRow
-                      label={t('dashboard.consultations')}
-                      value={formatCount(row.consultationCount)}
-                    />
-                  </div>
-                </Card>
-              </li>
-            ))}
-            <li>
-              <Card className="bg-brand-50">
-                <StatRow
-                  label={t('common.total')}
-                  value={formatMoney(report.data.totals.totalIncome)}
-                  strong
+          {report.data.rows.length > 0 && (
+            <section className="no-print">
+              <SectionTitle>{t('dashboard.comparison')}</SectionTitle>
+              <Card className="p-3">
+                <ComparisonColumnChart
+                  data={report.data.rows.map((row) => ({
+                    clinic: row.clinicName,
+                    income: row.totalIncome,
+                  }))}
                 />
               </Card>
-            </li>
-          </ul>
+            </section>
+          )}
 
-          <Card className="hidden overflow-hidden lg:block">
+          <Card className="overflow-x-auto">
             <table className="print-table w-full text-sm">
               <thead className="bg-canvas text-xs tracking-wide text-muted uppercase">
                 <tr>

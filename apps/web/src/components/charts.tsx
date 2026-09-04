@@ -2,6 +2,7 @@ import {
   Bar,
   BarChart,
   Cell,
+  LabelList,
   Line,
   LineChart,
   Pie,
@@ -31,6 +32,9 @@ const CONSULT_COLOR = '#c2762a';
 const BRAND = '#0f8177';
 const GRID = '#e3e7ec';
 const MUTED = '#5b6675';
+const INK = '#0f172a';
+
+const dataLabelStyle = { fontSize: 11, fontWeight: 600, fill: INK } as const;
 
 function money(value: string): number {
   return Number(value);
@@ -48,6 +52,11 @@ function compact(value: number): string {
   if (Math.abs(value) >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
   if (Math.abs(value) >= 1000) return `${(value / 1000).toFixed(value % 1000 === 0 ? 0 : 1)}k`;
   return String(value);
+}
+
+/** Clinic names are open-ended in length; cap them so a label can never run into the plot area. */
+function truncateLabel(value: string, max = 10): string {
+  return value.length > max ? `${value.slice(0, max - 1)}…` : value;
 }
 
 function ChartTooltip({
@@ -81,11 +90,18 @@ export function DailyTrendChart({
 
   return (
     <ResponsiveContainer width="100%" height={190}>
-      <BarChart data={points} margin={{ top: 4, right: 4, bottom: 0, left: -14 }}>
+      <BarChart data={points} margin={{ top: 18, right: 4, bottom: 0, left: 4 }}>
         <XAxis dataKey="day" {...axisProps} interval="preserveStartEnd" minTickGap={12} />
-        <YAxis {...axisProps} width={46} tickFormatter={compact} />
+        <YAxis hide />
         <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(15,129,119,0.08)' }} />
-        <Bar dataKey="income" fill={BRAND} radius={[4, 4, 0, 0]} maxBarSize={26} />
+        <Bar dataKey="income" fill={BRAND} radius={[4, 4, 0, 0]} maxBarSize={26}>
+          <LabelList
+            dataKey="income"
+            position="top"
+            formatter={(value: number) => compact(value)}
+            style={dataLabelStyle}
+          />
+        </Bar>
       </BarChart>
     </ResponsiveContainer>
   );
@@ -100,9 +116,9 @@ export function MonthlyTrendChart({
 
   return (
     <ResponsiveContainer width="100%" height={190}>
-      <LineChart data={points} margin={{ top: 6, right: 8, bottom: 0, left: -14 }}>
+      <LineChart data={points} margin={{ top: 18, right: 8, bottom: 0, left: 8 }}>
         <XAxis dataKey="label" {...axisProps} interval="preserveStartEnd" minTickGap={16} />
-        <YAxis {...axisProps} width={46} tickFormatter={compact} />
+        <YAxis hide />
         <Tooltip content={<ChartTooltip />} />
         <Line
           type="monotone"
@@ -111,7 +127,14 @@ export function MonthlyTrendChart({
           strokeWidth={2.5}
           dot={{ r: 3, fill: BRAND }}
           activeDot={{ r: 5 }}
-        />
+        >
+          <LabelList
+            dataKey="income"
+            position="top"
+            formatter={(value: number) => compact(value)}
+            style={dataLabelStyle}
+          />
+        </Line>
       </LineChart>
     </ResponsiveContainer>
   );
@@ -126,13 +149,60 @@ export function ComparisonChart({
 
   return (
     <ResponsiveContainer width="100%" height={Math.max(150, points.length * 52)}>
-      <BarChart data={points} layout="vertical" margin={{ top: 4, right: 12, bottom: 0, left: 4 }}>
-        <XAxis type="number" {...axisProps} tickFormatter={compact} />
+      <BarChart data={points} layout="vertical" margin={{ top: 4, right: 40, bottom: 0, left: 4 }}>
+        <XAxis type="number" hide />
         {/* Horizontal bars: clinic names read normally instead of being rotated, which
-            matters more once names are long or Arabic. */}
-        <YAxis type="category" dataKey="clinic" {...axisProps} width={84} />
+            matters more once names are long or Arabic. Truncated so a long name can never
+            run into the bar it labels. */}
+        <YAxis
+          type="category"
+          dataKey="clinic"
+          {...axisProps}
+          width={84}
+          tickFormatter={(value: string) => truncateLabel(value)}
+        />
         <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(15,129,119,0.08)' }} />
-        <Bar dataKey="income" fill={BRAND} radius={[0, 4, 4, 0]} maxBarSize={28} />
+        <Bar dataKey="income" fill={BRAND} radius={[0, 4, 4, 0]} maxBarSize={28}>
+          <LabelList
+            dataKey="income"
+            position="right"
+            formatter={(value: number) => compact(value)}
+            style={dataLabelStyle}
+          />
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
+/** Vertical columns, one per clinic - a quick side-by-side read of who earned what. */
+export function ComparisonColumnChart({
+  data,
+}: {
+  data: Array<{ clinic: string; income: string }>;
+}) {
+  const points = data.map((row) => ({ clinic: row.clinic, income: money(row.income) }));
+
+  return (
+    <ResponsiveContainer width="100%" height={220}>
+      <BarChart data={points} margin={{ top: 18, right: 4, bottom: 0, left: 4 }}>
+        <XAxis
+          dataKey="clinic"
+          {...axisProps}
+          interval={0}
+          tick={{ fontSize: 11 }}
+          tickFormatter={(value: string) => truncateLabel(value, 8)}
+        />
+        <YAxis hide />
+        <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(15,129,119,0.08)' }} />
+        <Bar dataKey="income" fill={BRAND} radius={[4, 4, 0, 0]} maxBarSize={48}>
+          <LabelList
+            dataKey="income"
+            position="top"
+            formatter={(value: number) => compact(value)}
+            style={dataLabelStyle}
+          />
+        </Bar>
       </BarChart>
     </ResponsiveContainer>
   );

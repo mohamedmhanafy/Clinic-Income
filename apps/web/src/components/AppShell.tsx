@@ -1,9 +1,9 @@
 import { useState, type ComponentType } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAppState } from '../lib/app-state';
 import { useClinics } from '../lib/queries';
-import { Sheet } from './ui';
+import { EmptyState, Sheet, Spinner } from './ui';
 import {
   CalendarIcon,
   DashboardIcon,
@@ -244,6 +244,39 @@ function MoreSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   );
 }
 
+/**
+ * Every screen except Settings > Clinics assumes at least one clinic exists (it's what
+ * `clinicId` gets set to, and every query keys off it). On a brand new install there are
+ * none yet, so those screens would otherwise sit on a query that's permanently disabled -
+ * gate here, once, instead of teaching every page about the empty case.
+ */
+function ClinicGate() {
+  const { t } = useTranslation();
+  const location = useLocation();
+  const { data: clinics, isPending } = useClinics();
+
+  if (isPending) return <Spinner />;
+
+  if (clinics && clinics.length === 0 && location.pathname !== '/settings/clinics') {
+    return (
+      <EmptyState
+        title={t('dashboard.noClinicsTitle')}
+        hint={t('dashboard.noClinicsHint')}
+        action={
+          <Link
+            to="/settings/clinics"
+            className="tap mt-1 inline-flex items-center justify-center rounded-xl bg-brand-600 px-5 text-sm font-semibold text-white"
+          >
+            {t('dashboard.addClinic')}
+          </Link>
+        }
+      />
+    );
+  }
+
+  return <Outlet />;
+}
+
 export function AppShell() {
   const [moreOpen, setMoreOpen] = useState(false);
 
@@ -254,7 +287,7 @@ export function AppShell() {
         <TopBar />
         {/* Bottom padding clears the fixed nav bar so the last row is never trapped under it. */}
         <main className="mx-auto max-w-5xl px-4 pt-4 pb-28 lg:pb-10">
-          <Outlet />
+          <ClinicGate />
         </main>
       </div>
       <BottomNav onMore={() => setMoreOpen(true)} />

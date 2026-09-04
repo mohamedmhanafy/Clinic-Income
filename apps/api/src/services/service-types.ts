@@ -24,7 +24,7 @@ function toServiceDto(service: Service): ServiceDto {
   };
 }
 
-export async function listServices(clinicId: number, includeInactive = true): Promise<ServiceDto[]> {
+export async function listServices(clinicId: number, includeInactive = false): Promise<ServiceDto[]> {
   const services = await prisma.service.findMany({
     where: includeInactive ? { clinicId } : { clinicId, status: 'ACTIVE' },
     orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
