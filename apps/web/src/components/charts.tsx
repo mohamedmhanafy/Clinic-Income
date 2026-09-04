@@ -76,7 +76,7 @@ function BarLineCursor({
   height?: number;
 }) {
   const centerX = x + width / 2;
-  return <line x1={centerX} y1={y} x2={centerX} y2={y + height} stroke={MUTED} strokeWidth={1} />;
+  return <line x1={centerX} y1={y} x2={centerX} y2={y + height} stroke={GRID} strokeWidth={1} />;
 }
 
 function ChartTooltip({
