@@ -16,6 +16,7 @@ import { Card, EmptyState, ErrorNotice, Field, Input, SectionTitle, Spinner } fr
 import { PeriodBar } from '../components/PeriodBar';
 import { ExportBar } from '../components/ExportBar';
 import { ChevronIcon } from '../components/icons';
+import { DatePicker } from '../components/DatePicker';
 
 /**
  * Reports.

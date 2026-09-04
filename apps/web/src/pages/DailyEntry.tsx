@@ -14,6 +14,7 @@ import {
   todayIso,
 } from '../lib/format';
 import { Button, Card, ErrorNotice, Notice, Sheet, Spinner, Stepper } from '../components/ui';
+import { DatePicker } from '../components/DatePicker';
 
 /**
  * Daily income entry - the screen the app exists for.
@@ -184,12 +185,15 @@ export default function DailyEntry() {
 
           <label className="flex min-w-0 flex-1 flex-col items-center">
             <span className="sr-only">{t('common.date')}</span>
-            <span className="text-base font-semibold text-ink">{formatFullDate(date, language)}</span>
-            <input
-              type="date"
+            <DatePicker
               value={date}
-              onChange={(event) => event.target.value && setDate(event.target.value)}
-              className="mt-0.5 bg-transparent text-center text-xs text-muted focus:outline-none"
+              onChange={(value) => value && setDate(value)}
+              customInput={
+                <button type="button" className="tap flex flex-col items-center bg-transparent border-none text-base font-semibold text-ink cursor-pointer focus:outline-none">
+                  <span>{formatFullDate(date, language)}</span>
+                  <span className="mt-0.5 text-xs text-brand-600 font-medium opacity-80">{t('common.edit')}</span>
+                </button>
+              }
             />
           </label>
 
