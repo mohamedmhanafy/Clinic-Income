@@ -1,6 +1,4 @@
 import {
-  Bar,
-  BarChart,
   Cell,
   LabelList,
   Line,
@@ -94,19 +92,26 @@ export function DailyTrendChart({
 
   return (
     <ResponsiveContainer width="100%" height={190}>
-      <BarChart data={points} margin={{ top: 18, right: 8, bottom: 0, left: 8 }}>
+      <LineChart data={points} margin={{ top: 18, right: 8, bottom: 0, left: 8 }}>
         <XAxis dataKey="day" {...axisProps} interval="preserveStartEnd" minTickGap={12} />
         <YAxis hide />
-        <Tooltip content={<ChartTooltip />} cursor={false} />
-        <Bar dataKey="income" fill={BRAND} radius={[3, 3, 0, 0]}>
+        <Tooltip content={<ChartTooltip />} />
+        <Line
+          type="monotone"
+          dataKey="income"
+          stroke={BRAND}
+          strokeWidth={2.5}
+          dot={{ r: 3, fill: BRAND }}
+          activeDot={{ r: 5 }}
+        >
           <LabelList
             dataKey="income"
             position="top"
             formatter={(value: number) => compactNonZero(value)}
             style={dataLabelStyle}
           />
-        </Bar>
-      </BarChart>
+        </Line>
+      </LineChart>
     </ResponsiveContainer>
   );
 }
