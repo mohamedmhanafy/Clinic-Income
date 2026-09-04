@@ -158,7 +158,7 @@ export default function SettingsServices() {
                       form.status === value
                         ? value === 'ACTIVE'
                           ? 'bg-brand-600 text-white'
-                          : 'bg-[--color-danger] text-white'
+                          : 'bg-red-600 text-white'
                         : 'bg-white text-muted',
                     ].join(' ')}
                   >
