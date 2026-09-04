@@ -53,6 +53,8 @@ export default function SettingsClinics() {
   const close = () => {
     setCreating(false);
     setEditing(null);
+    setName('');
+    setStatus('ACTIVE');
   };
 
   const submit = async () => {
