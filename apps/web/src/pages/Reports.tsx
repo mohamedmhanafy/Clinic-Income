@@ -141,7 +141,7 @@ function DailyReport() {
 
       {entry.data && entry.data.activity.lines.length > 0 && (
         <>
-          <Card className="bg-brand-50">
+          <Card className="bg-brand-50 no-print">
             <StatRow
               label={t('daily.dailyTotal')}
               value={<Money value={entry.data.activity.totalDailyIncome} />}
@@ -149,7 +149,10 @@ function DailyReport() {
             />
           </Card>
 
-          <Card>
+          {/* Screen: a compact list. print:hidden because a `hidden` ancestor would hide its
+              contents on paper too regardless of screen width, so print visibility has to be
+              set on this same element. */}
+          <Card className="print:hidden">
             <ul className="divide-y divide-line">
               {entry.data.activity.lines.map((line) => (
                 <li key={line.serviceId} className="px-4 py-3">
@@ -167,6 +170,46 @@ function DailyReport() {
                 </li>
               ))}
             </ul>
+          </Card>
+
+          {/* Printed page: a table with a totals row, same shape as the monthly/annual reports. */}
+          <Card className="hidden overflow-x-auto print:block">
+            <table className="min-w-full text-sm">
+              <thead className="bg-canvas text-xs tracking-wide text-muted uppercase">
+                <tr>
+                  <th className="px-4 py-3 text-start font-semibold">{t('common.service')}</th>
+                  <th className="px-4 py-3 text-end font-semibold">{t('common.count')}</th>
+                  <th className="px-4 py-3 text-end font-semibold">{t('common.fee')}</th>
+                  <th className="px-4 py-3 text-end font-semibold">{t('common.income')}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line">
+                {entry.data.activity.lines.map((line) => (
+                  <tr key={line.serviceId}>
+                    <td className="px-4 py-2.5 text-ink">
+                      {language === 'ar' ? line.serviceNameAr : line.serviceNameEn}
+                    </td>
+                    <td className="tabnum px-4 py-2.5 text-end">{formatCount(line.quantity)}</td>
+                    <td className="tabnum px-4 py-2.5 text-end">
+                      <Money value={line.unitFee} />
+                    </td>
+                    <td className="tabnum px-4 py-2.5 text-end font-semibold">
+                      <Money value={line.lineTotal} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot className="border-t-2 border-line bg-canvas font-bold">
+                <tr>
+                  <td className="px-4 py-3" colSpan={3}>
+                    {t('common.total')}
+                  </td>
+                  <td className="tabnum px-4 py-3 text-end">
+                    <Money value={entry.data.activity.totalDailyIncome} />
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
           </Card>
         </>
       )}
@@ -236,7 +279,7 @@ function MonthlyReport() {
 
       {report.data && report.data.rows.length > 0 && (
         <>
-          <Card className="bg-brand-50">
+          <Card className="bg-brand-50 no-print">
             <StatRow
               label={t('monthly.monthTotal')}
               value={<Money value={report.data.totals.totalIncome} />}
@@ -329,37 +372,35 @@ function MonthlyReport() {
             })}
           </ul>
 
-          {/* Tablet and desktop: the full table. Always shown on the printed page. */}
+          {/* Tablet and desktop: the full table, one column per real service (whatever is
+              configured in Settings), not a fixed examination/consultation pair - same
+              date-rows/service-columns shape as the annual report table. Always shown on the
+              printed page. */}
           <Card className="hidden overflow-x-auto lg:block print:block">
             <table className="min-w-full text-sm">
               <thead className="bg-canvas text-xs tracking-wide text-muted uppercase">
                 <tr>
                   <th className="px-4 py-3 text-start font-semibold">{t('common.date')}</th>
-                  <th className="px-4 py-3 text-end font-semibold">{t('dashboard.examinations')}</th>
-                  <th className="px-4 py-3 text-end font-semibold">{t('monthly.examIncome')}</th>
-                  <th className="px-4 py-3 text-end font-semibold">
-                    {t('dashboard.consultations')}
-                  </th>
-                  <th className="px-4 py-3 text-end font-semibold">{t('monthly.consultIncome')}</th>
-                  <th className="px-4 py-3 text-end font-semibold">{t('monthly.dailyTotal')}</th>
+                  {report.data.byService.map((service) => (
+                    <th key={service.serviceId} className="px-4 py-3 text-end font-semibold">
+                      {language === 'ar' ? service.serviceNameAr : service.serviceNameEn}
+                    </th>
+                  ))}
+                  <th className="px-4 py-3 text-end font-semibold">{t('common.total')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
                 {report.data.rows.map((row) => (
                   <tr key={row.date}>
                     <td className="px-4 py-2.5 text-ink">{formatDayLabel(row.date, language)}</td>
-                    <td className="tabnum px-4 py-2.5 text-end">
-                      {formatCount(row.examinationCount)}
-                    </td>
-                    <td className="tabnum px-4 py-2.5 text-end">
-                      {<Money value={row.examinationIncome} />}
-                    </td>
-                    <td className="tabnum px-4 py-2.5 text-end">
-                      {formatCount(row.consultationCount)}
-                    </td>
-                    <td className="tabnum px-4 py-2.5 text-end">
-                      {<Money value={row.consultationIncome} />}
-                    </td>
+                    {report.data.byService.map((service) => {
+                      const line = row.lines.find((item) => item.serviceId === service.serviceId);
+                      return (
+                        <td key={service.serviceId} className="tabnum px-4 py-2.5 text-end">
+                          <Money value={line?.lineTotal ?? '0'} />
+                        </td>
+                      );
+                    })}
                     <td className="tabnum px-4 py-2.5 text-end font-semibold">
                       {<Money value={row.totalDailyIncome} />}
                     </td>
@@ -369,18 +410,11 @@ function MonthlyReport() {
               <tfoot className="border-t-2 border-line bg-canvas font-bold">
                 <tr>
                   <td className="px-4 py-3">{t('common.total')}</td>
-                  <td className="tabnum px-4 py-3 text-end">
-                    {formatCount(report.data.totals.examinationCount)}
-                  </td>
-                  <td className="tabnum px-4 py-3 text-end">
-                    {<Money value={report.data.totals.examinationIncome} />}
-                  </td>
-                  <td className="tabnum px-4 py-3 text-end">
-                    {formatCount(report.data.totals.consultationCount)}
-                  </td>
-                  <td className="tabnum px-4 py-3 text-end">
-                    {<Money value={report.data.totals.consultationIncome} />}
-                  </td>
+                  {report.data.byService.map((service) => (
+                    <td key={service.serviceId} className="tabnum px-4 py-3 text-end">
+                      <Money value={service.income} />
+                    </td>
+                  ))}
                   <td className="tabnum px-4 py-3 text-end">
                     {<Money value={report.data.totals.totalIncome} />}
                   </td>
