@@ -1,13 +1,11 @@
 import { Router, type Response } from 'express';
 import type {
   AnnualReportDto,
-  ComparisonReportDto,
   ExportFormat,
   MonthlyReportDto,
 } from '@clinic/shared';
 import {
   annualQuerySchema,
-  comparisonQuerySchema,
   dailyReportQuerySchema,
   dashboardQuerySchema,
   monthQuerySchema,
@@ -15,7 +13,6 @@ import {
 import { getQuery, validateQuery } from '../middleware/validate.js';
 import {
   getAnnualReport,
-  getComparisonReport,
   getDashboardSummary,
   getMonthlyReport,
 } from '../services/reports.js';
@@ -157,54 +154,6 @@ reportsRouter.get('/monthly', validateQuery(monthQuerySchema), async (_req, res)
   res.json(report);
 });
 
-/* -------------------------------------------------------------------------- */
-/* Clinic comparison                                                           */
-/* -------------------------------------------------------------------------- */
-
-function comparisonSheet(report: ComparisonReportDto): ExportSheet {
-  return {
-    title: `Clinic comparison ${report.from} to ${report.to}`,
-    columns: [
-      { header: 'Clinic', key: 'clinic', width: 24 },
-      { header: 'Examinations', key: 'examinations', width: 14 },
-      { header: 'Consultations', key: 'consultations', width: 14 },
-      { header: 'Total income', key: 'total', width: 18, numeric: true },
-    ],
-    rows: report.rows.map((row) => ({
-      clinic: row.clinicName,
-      examinations: row.examinationCount,
-      consultations: row.consultationCount,
-      total: moneyForExport(row.totalIncome),
-    })),
-    totals: {
-      clinic: 'Total',
-      examinations: report.totals.examinationCount,
-      consultations: report.totals.consultationCount,
-      total: moneyForExport(report.totals.totalIncome),
-    },
-  };
-}
-
-reportsRouter.get('/comparison', validateQuery(comparisonQuerySchema), async (_req, res) => {
-  const query = getQuery<{
-    year?: number;
-    month?: number;
-    from?: string;
-    to?: string;
-    format: ExportFormat;
-  }>(res);
-
-  // The schema guarantees one of the two forms is present.
-  const range =
-    query.from && query.to
-      ? { from: query.from, to: query.to }
-      : monthRange(query.year as number, query.month as number);
-
-  const report = await getComparisonReport(range.from, range.to);
-  const filename = `clinic-comparison-${range.from}-to-${range.to}`;
-  if (await sendExport(res, query.format, comparisonSheet(report), filename)) return;
-  res.json(report);
-});
 
 /* -------------------------------------------------------------------------- */
 /* Annual report                                                               */

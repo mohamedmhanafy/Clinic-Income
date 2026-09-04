@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppState } from '../lib/app-state';
-import { useAnnual, useComparison, useDailyEntry, useMonthly } from '../lib/queries';
+import { useAnnual, useDailyEntry, useMonthly } from '../lib/queries';
 import { ApiError } from '../lib/api';
 import {
   firstOfMonth,
@@ -15,7 +15,6 @@ import {
 import { Card, EmptyState, ErrorNotice, Field, Input, SectionTitle, Spinner } from '../components/ui';
 import { PeriodBar } from '../components/PeriodBar';
 import { ExportBar } from '../components/ExportBar';
-import { ComparisonColumnChart } from '../components/charts';
 import { ChevronIcon } from '../components/icons';
 
 /**
@@ -26,13 +25,12 @@ import { ChevronIcon } from '../components/icons';
  * Excel, and prints to PDF through the browser.
  */
 
-type Tab = 'daily' | 'monthly' | 'comparison' | 'annual';
+type Tab = 'daily' | 'monthly' | 'annual';
 
 function Tabs({ value, onChange }: { value: Tab; onChange: (tab: Tab) => void }) {
   const { t } = useTranslation();
-  // Period reports ascend by scope (day, month, year); comparison is a different kind of
-  // report - across clinics rather than across time - so it sits apart at the end.
-  const tabs: Tab[] = ['daily', 'monthly', 'annual', 'comparison'];
+  // Period reports ascend by scope (day, month, year).
+  const tabs: Tab[] = ['daily', 'monthly', 'annual'];
 
   return (
     <div className="no-print -mx-4 overflow-x-auto px-4">
@@ -196,113 +194,6 @@ function MonthlyReport() {
   );
 }
 
-function ComparisonReport() {
-  const { t } = useTranslation();
-  const { year, month } = useAppState();
-  const [from, setFrom] = useState(() => firstOfMonth(year, month));
-  const [to, setTo] = useState(() => lastOfMonth(year, month));
-
-  const report = useComparison({ from, to });
-
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-2 gap-3">
-        <Field label={t('common.from')} htmlFor="cmp-from">
-          <Input
-            id="cmp-from"
-            type="date"
-            value={from}
-            onChange={(event) => event.target.value && setFrom(event.target.value)}
-          />
-        </Field>
-        <Field label={t('common.to')} htmlFor="cmp-to">
-          <Input
-            id="cmp-to"
-            type="date"
-            value={to}
-            onChange={(event) => event.target.value && setTo(event.target.value)}
-          />
-        </Field>
-      </div>
-
-      <ExportBar report="comparison" params={{ from, to }} />
-
-      {report.isPending && <Spinner />}
-      {report.isError && (
-        <ErrorNotice
-          message={
-            report.error instanceof ApiError ? report.error.message : t('common.somethingWrong')
-          }
-        />
-      )}
-
-      {report.data && (
-        <>
-          {report.data.rows.length > 0 && (
-            <section className="no-print">
-              <SectionTitle>{t('dashboard.comparison')}</SectionTitle>
-              <Card className="p-3">
-                <ComparisonColumnChart
-                  data={report.data.rows.map((row) => ({
-                    clinic: row.clinicName,
-                    income: row.totalIncome,
-                  }))}
-                />
-              </Card>
-            </section>
-          )}
-
-          <Card className="overflow-x-auto">
-            <table className="print-table w-full text-sm">
-              <thead className="bg-canvas text-xs tracking-wide text-muted uppercase">
-                <tr>
-                  <th className="px-4 py-3 text-start font-semibold">{t('common.clinic')}</th>
-                  <th className="px-4 py-3 text-end font-semibold">{t('dashboard.examinations')}</th>
-                  <th className="px-4 py-3 text-end font-semibold">
-                    {t('dashboard.consultations')}
-                  </th>
-                  <th className="px-4 py-3 text-end font-semibold">
-                    {t('dashboard.totalIncome')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-line">
-                {report.data.rows.map((row) => (
-                  <tr key={row.clinicId}>
-                    <td className="px-4 py-2.5 text-ink">{row.clinicName}</td>
-                    <td className="tabnum px-4 py-2.5 text-end">
-                      {formatCount(row.examinationCount)}
-                    </td>
-                    <td className="tabnum px-4 py-2.5 text-end">
-                      {formatCount(row.consultationCount)}
-                    </td>
-                    <td className="tabnum px-4 py-2.5 text-end font-semibold">
-                      {formatMoney(row.totalIncome)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot className="border-t-2 border-line bg-canvas font-bold">
-                <tr>
-                  <td className="px-4 py-3">{t('common.total')}</td>
-                  <td className="tabnum px-4 py-3 text-end">
-                    {formatCount(report.data.totals.examinationCount)}
-                  </td>
-                  <td className="tabnum px-4 py-3 text-end">
-                    {formatCount(report.data.totals.consultationCount)}
-                  </td>
-                  <td className="tabnum px-4 py-3 text-end">
-                    {formatMoney(report.data.totals.totalIncome)}
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
-          </Card>
-        </>
-      )}
-    </div>
-  );
-}
 
 function AnnualReport() {
   const { t } = useTranslation();
@@ -456,7 +347,6 @@ export default function Reports() {
 
       {tab === 'daily' && <DailyReport />}
       {tab === 'monthly' && <MonthlyReport />}
-      {tab === 'comparison' && <ComparisonReport />}
       {tab === 'annual' && <AnnualReport />}
     </div>
   );

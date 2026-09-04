@@ -157,26 +157,7 @@ export const annualQuerySchema = z.object({
   format: exportFormatSchema,
 });
 
-/**
- * Comparison accepts either a year+month pair or an explicit from/to range, so the same
- * endpoint serves the "this month" view and the ad-hoc date-range filter.
- */
-export const comparisonQuerySchema = z
-  .object({
-    year: yearSchema.optional(),
-    month: monthSchema.optional(),
-    from: isoDateSchema.optional(),
-    to: isoDateSchema.optional(),
-    format: exportFormatSchema,
-  })
-  .refine(
-    (value) => (value.from && value.to) || (value.year !== undefined && value.month !== undefined),
-    'Provide either from and to, or year and month',
-  )
-  .refine((value) => !value.from || !value.to || value.to >= value.from, {
-    message: 'End date must be on or after the start date',
-    path: ['to'],
-  });
+
 
 export const dashboardQuerySchema = z.object({
   clinicId: idSchema,

@@ -24,7 +24,6 @@ export const keys = {
     ['dashboard', clinicId, year, month] as const,
   monthly: (clinicId: number, year: number, month: number) =>
     ['monthly', clinicId, year, month] as const,
-  comparison: (params: object) => ['comparison', params] as const,
   annual: (year: number) => ['annual', year] as const,
 };
 
@@ -77,13 +76,6 @@ export function useMonthly(clinicId: number | null, year: number, month: number)
   });
 }
 
-export function useComparison(params: { year?: number; month?: number; from?: string; to?: string }) {
-  return useQuery({
-    queryKey: keys.comparison(params),
-    queryFn: () => api.reports.comparison(params),
-  });
-}
-
 export function useAnnual(year: number) {
   return useQuery({ queryKey: keys.annual(year), queryFn: () => api.reports.annual(year) });
 }
@@ -92,7 +84,7 @@ export function useAnnual(year: number) {
 function useInvalidateIncome() {
   const client = useQueryClient();
   return () => {
-    for (const key of ['daily', 'dashboard', 'monthly', 'comparison', 'annual']) {
+    for (const key of ['daily', 'dashboard', 'monthly', 'annual']) {
       void client.invalidateQueries({ queryKey: [key] });
     }
   };

@@ -1,7 +1,5 @@
 import type {
   AnnualReportDto,
-  ComparisonReportDto,
-  ComparisonRowDto,
   DashboardSummaryDto,
   MonthlyReportDto,
   MonthlyReportRowDto,
@@ -208,65 +206,6 @@ export async function getMonthlyReport(
   };
 }
 
-interface ComparisonRawRow {
-  clinic_id: number;
-  clinic_name: string;
-  code: string | null;
-  quantity: number;
-  income: Prisma.Decimal;
-}
-
-export async function getComparisonReport(from: string, to: string): Promise<ComparisonReportDto> {
-  const raw = await prisma.$queryRaw<ComparisonRawRow[]>`
-    SELECT c.id                              AS clinic_id,
-           c.name                            AS clinic_name,
-           s.code                            AS code,
-           COALESCE(SUM(l.quantity), 0)::int AS quantity,
-           COALESCE(SUM(l.line_total), 0)    AS income
-      FROM clinics c
-      LEFT JOIN daily_activities a
-             ON a.clinic_id = c.id
-            AND a.activity_date BETWEEN ${from}::date AND ${to}::date
-      LEFT JOIN daily_activity_lines l ON l.activity_id = a.id
-      LEFT JOIN services s             ON s.id = l.service_id
-     WHERE c.status = 'ACTIVE'
-     GROUP BY c.id, c.name, s.code
-     ORDER BY c.name
-  `;
-
-  const byClinic = new Map<number, ComparisonRowDto>();
-  for (const row of raw) {
-    let entry = byClinic.get(row.clinic_id);
-    if (!entry) {
-      entry = {
-        clinicId: row.clinic_id,
-        clinicName: row.clinic_name,
-        examinationCount: 0,
-        consultationCount: 0,
-        totalIncome: '0.00',
-      };
-      byClinic.set(row.clinic_id, entry);
-    }
-    if (row.code === EXAMINATION_CODE) entry.examinationCount = row.quantity;
-    if (row.code === CONSULTATION_CODE) entry.consultationCount = row.quantity;
-    if (row.code !== null) {
-      entry.totalIncome = toMoney(sumMoney([entry.totalIncome, row.income]));
-    }
-  }
-
-  const rows = [...byClinic.values()].sort((a, b) => a.clinicName.localeCompare(b.clinicName));
-
-  return {
-    from,
-    to,
-    rows,
-    totals: {
-      examinationCount: rows.reduce((sum, row) => sum + row.examinationCount, 0),
-      consultationCount: rows.reduce((sum, row) => sum + row.consultationCount, 0),
-      totalIncome: toMoney(sumMoney(rows.map((row) => row.totalIncome))),
-    },
-  };
-}
 
 interface AnnualRawRow {
   clinic_id: number;

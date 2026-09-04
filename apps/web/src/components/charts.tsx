@@ -140,73 +140,7 @@ export function MonthlyTrendChart({
   );
 }
 
-export function ComparisonChart({
-  data,
-}: {
-  data: Array<{ clinic: string; income: string }>;
-}) {
-  const points = data.map((row) => ({ clinic: row.clinic, income: money(row.income) }));
 
-  return (
-    <ResponsiveContainer width="100%" height={Math.max(150, points.length * 52)}>
-      <BarChart data={points} layout="vertical" margin={{ top: 4, right: 40, bottom: 0, left: 4 }}>
-        <XAxis type="number" hide />
-        {/* Horizontal bars: clinic names read normally instead of being rotated, which
-            matters more once names are long or Arabic. Truncated so a long name can never
-            run into the bar it labels. */}
-        <YAxis
-          type="category"
-          dataKey="clinic"
-          {...axisProps}
-          width={84}
-          tickFormatter={(value: string) => truncateLabel(value)}
-        />
-        <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(15,129,119,0.08)' }} />
-        <Bar dataKey="income" fill={BRAND} radius={[0, 4, 4, 0]} maxBarSize={28}>
-          <LabelList
-            dataKey="income"
-            position="right"
-            formatter={(value: number) => compact(value)}
-            style={dataLabelStyle}
-          />
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
-  );
-}
-
-/** Vertical columns, one per clinic - a quick side-by-side read of who earned what. */
-export function ComparisonColumnChart({
-  data,
-}: {
-  data: Array<{ clinic: string; income: string }>;
-}) {
-  const points = data.map((row) => ({ clinic: row.clinic, income: money(row.income) }));
-
-  return (
-    <ResponsiveContainer width="100%" height={220}>
-      <BarChart data={points} margin={{ top: 18, right: 4, bottom: 0, left: 4 }}>
-        <XAxis
-          dataKey="clinic"
-          {...axisProps}
-          interval={0}
-          tick={{ fontSize: 11 }}
-          tickFormatter={(value: string) => truncateLabel(value, 8)}
-        />
-        <YAxis hide />
-        <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(15,129,119,0.08)' }} />
-        <Bar dataKey="income" fill={BRAND} radius={[4, 4, 0, 0]} maxBarSize={48}>
-          <LabelList
-            dataKey="income"
-            position="top"
-            formatter={(value: number) => compact(value)}
-            style={dataLabelStyle}
-          />
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
-  );
-}
 
 export function CompositionChart({
   examination,

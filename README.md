@@ -299,7 +299,7 @@ shown to a user.
 | `GET` | `/api/dashboard/summary?clinicId&year&month` | The six KPI figures |
 | `GET` | `/api/reports/daily?clinicId&date` | Daily report |
 | `GET` | `/api/reports/monthly?clinicId&year&month` | Day-by-day table with totals |
-| `GET` | `/api/reports/comparison?year&month` or `?from&to` | Clinics side by side |
+
 | `GET` | `/api/reports/annual?year` | Months × clinics |
 
 Every `/api/reports/*` endpoint accepts `?format=csv` or `?format=xlsx` and streams a file instead
@@ -335,7 +335,7 @@ curl -X PUT http://localhost:4000/api/daily \
 | `/` | **Dashboard** — 6 KPIs and 4 charts for the selected clinic and month |
 | `/daily` | **Daily Income** — the entry screen |
 | `/monthly` | **Monthly Income** — day by day, with a pinned month total |
-| `/reports` | **Reports** — Daily / Monthly / Comparison / Annual, each exportable |
+| `/reports` | **Reports** — Daily / Monthly / Annual, each exportable |
 | `/settings/clinics` | Add and edit clinics |
 | `/settings/services` | Add and edit service types |
 | `/settings/pricing` | Fee schedule with effective dates and full history |

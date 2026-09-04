@@ -147,24 +147,7 @@ export interface MonthlyReportDto {
   };
 }
 
-export interface ComparisonRowDto {
-  clinicId: number;
-  clinicName: string;
-  examinationCount: number;
-  consultationCount: number;
-  totalIncome: Money;
-}
 
-export interface ComparisonReportDto {
-  from: IsoDate;
-  to: IsoDate;
-  rows: ComparisonRowDto[];
-  totals: {
-    examinationCount: number;
-    consultationCount: number;
-    totalIncome: Money;
-  };
-}
 
 export interface AnnualReportDto {
   year: number;

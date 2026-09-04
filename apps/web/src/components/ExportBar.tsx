@@ -13,7 +13,7 @@ export function ExportBar({
   report,
   params,
 }: {
-  report: 'daily' | 'monthly' | 'comparison' | 'annual';
+  report: 'daily' | 'monthly' | 'annual';
   params: Record<string, string | number | undefined>;
 }) {
   const { t } = useTranslation();
