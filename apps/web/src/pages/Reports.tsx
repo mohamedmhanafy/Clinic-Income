@@ -672,19 +672,14 @@ function CustomReport() {
               value={<Money value={report.data.totals.totalIncome} />}
             />
             <hr className="border-line" />
-            <div className="flex">
-              <div className="flex-1 border-r border-line">
+            <div className="divide-y divide-line">
+              {report.data.byService.map((service) => (
                 <StatRow
-                  label={t('reports.examIncome')}
-                  value={<Money value={report.data.totals.examinationIncome} />}
+                  key={service.serviceId}
+                  label={language === 'ar' ? service.serviceNameAr : service.serviceNameEn}
+                  value={<Money value={service.income} />}
                 />
-              </div>
-              <div className="flex-1">
-                <StatRow
-                  label={t('reports.consultIncome')}
-                  value={<Money value={report.data.totals.consultationIncome} />}
-                />
-              </div>
+              ))}
             </div>
           </Card>
 
@@ -756,10 +751,11 @@ function CustomReport() {
               <thead className="bg-canvas text-xs tracking-wide text-muted uppercase">
                 <tr>
                   <th className="px-4 py-3 text-start font-semibold">{t('common.date')}</th>
-                  <th className="px-4 py-3 text-end font-semibold">{t('common.count')}</th>
-                  <th className="px-4 py-3 text-end font-semibold">{t('reports.examIncome')}</th>
-                  <th className="px-4 py-3 text-end font-semibold">{t('common.count')}</th>
-                  <th className="px-4 py-3 text-end font-semibold">{t('reports.consultIncome')}</th>
+                  {report.data.byService.map((service) => (
+                    <th key={service.serviceId} className="px-4 py-3 text-end font-semibold">
+                      {language === 'ar' ? service.serviceNameAr : service.serviceNameEn}
+                    </th>
+                  ))}
                   <th className="px-4 py-3 text-end font-semibold">{t('common.total')}</th>
                 </tr>
               </thead>
@@ -767,18 +763,21 @@ function CustomReport() {
                 {report.data.rows.map((row) => (
                   <tr key={row.date}>
                     <td className="px-4 py-2.5 text-ink">{formatFullDate(row.date, language)}</td>
-                    <td className="tabnum px-4 py-2.5 text-end text-muted">
-                      {formatCount(row.examinationCount)}
-                    </td>
-                    <td className="tabnum px-4 py-2.5 text-end">
-                      <Money value={row.examinationIncome} />
-                    </td>
-                    <td className="tabnum px-4 py-2.5 text-end text-muted">
-                      {formatCount(row.consultationCount)}
-                    </td>
-                    <td className="tabnum px-4 py-2.5 text-end">
-                      <Money value={row.consultationIncome} />
-                    </td>
+                    {report.data.byService.map((service) => {
+                      const line = row.lines.find((item) => item.serviceId === service.serviceId);
+                      return (
+                        <td key={service.serviceId} className="tabnum px-4 py-2.5 text-end">
+                          <span className="inline-flex items-baseline gap-1.5 justify-end">
+                            {line && line.quantity > 0 && (
+                              <span className="text-xs font-normal text-muted">
+                                ({formatCount(line.quantity)})
+                              </span>
+                            )}
+                            <Money value={line?.lineTotal ?? '0'} />
+                          </span>
+                        </td>
+                      );
+                    })}
                     <td className="tabnum px-4 py-2.5 text-end font-semibold">
                       <Money value={row.totalDailyIncome} />
                     </td>
@@ -788,18 +787,11 @@ function CustomReport() {
               <tfoot className="border-t-2 border-line bg-canvas font-bold">
                 <tr>
                   <td className="px-4 py-3">{t('common.total')}</td>
-                  <td className="tabnum px-4 py-3 text-end text-muted">
-                    {formatCount(report.data.totals.examinationCount)}
-                  </td>
-                  <td className="tabnum px-4 py-3 text-end">
-                    <Money value={report.data.totals.examinationIncome} />
-                  </td>
-                  <td className="tabnum px-4 py-3 text-end text-muted">
-                    {formatCount(report.data.totals.consultationCount)}
-                  </td>
-                  <td className="tabnum px-4 py-3 text-end">
-                    <Money value={report.data.totals.consultationIncome} />
-                  </td>
+                  {report.data.byService.map((service) => (
+                    <td key={service.serviceId} className="tabnum px-4 py-3 text-end">
+                      <Money value={service.income} />
+                    </td>
+                  ))}
                   <td className="tabnum px-4 py-3 text-end">
                     <Money value={report.data.totals.totalIncome} />
                   </td>

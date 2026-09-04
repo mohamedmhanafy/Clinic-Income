@@ -112,32 +112,41 @@ reportsRouter.get('/daily', validateQuery(dailyReportQuerySchema), async (_req, 
 /* -------------------------------------------------------------------------- */
 
 function monthlySheet(report: MonthlyReportDto): ExportSheet {
+  const serviceColumns = report.byService.map((service) => ({
+    header: service.serviceNameEn,
+    key: `service_${service.serviceId}`,
+    width: 16,
+    numeric: true,
+  }));
+
   return {
     title: `${report.clinicName} ${monthName(report.month)} ${report.year}`,
     columns: [
       { header: 'Date', key: 'date', width: 14 },
-      { header: 'Examinations', key: 'examinationCount', width: 14 },
-      { header: 'Exam income', key: 'examinationIncome', width: 16, numeric: true },
-      { header: 'Consultations', key: 'consultationCount', width: 14 },
-      { header: 'Consultation income', key: 'consultationIncome', width: 20, numeric: true },
+      ...serviceColumns,
       { header: 'Daily total', key: 'total', width: 16, numeric: true },
     ],
-    rows: report.rows.map((row) => ({
-      date: row.date,
-      examinationCount: row.examinationCount,
-      examinationIncome: moneyForExport(row.examinationIncome),
-      consultationCount: row.consultationCount,
-      consultationIncome: moneyForExport(row.consultationIncome),
-      total: moneyForExport(row.totalDailyIncome),
-    })),
-    totals: {
-      date: 'Total',
-      examinationCount: report.totals.examinationCount,
-      examinationIncome: moneyForExport(report.totals.examinationIncome),
-      consultationCount: report.totals.consultationCount,
-      consultationIncome: moneyForExport(report.totals.consultationIncome),
-      total: moneyForExport(report.totals.totalIncome),
-    },
+    rows: report.rows.map((row) => {
+      const record: Record<string, string | number> = {
+        date: row.date,
+        total: moneyForExport(row.totalDailyIncome),
+      };
+      for (const service of report.byService) {
+        const line = row.lines.find((item) => item.serviceId === service.serviceId);
+        record[`service_${service.serviceId}`] = moneyForExport(line?.lineTotal ?? '0.00');
+      }
+      return record;
+    }),
+    totals: (() => {
+      const record: Record<string, string | number> = {
+        date: 'Total',
+        total: moneyForExport(report.totals.totalIncome),
+      };
+      for (const service of report.byService) {
+        record[`service_${service.serviceId}`] = moneyForExport(service.income);
+      }
+      return record;
+    })(),
   };
 }
 
@@ -162,32 +171,41 @@ reportsRouter.get('/monthly', validateQuery(monthQuerySchema), async (_req, res)
 /* -------------------------------------------------------------------------- */
 
 function customSheet(report: CustomReportDto): ExportSheet {
+  const serviceColumns = report.byService.map((service) => ({
+    header: service.serviceNameEn,
+    key: `service_${service.serviceId}`,
+    width: 16,
+    numeric: true,
+  }));
+
   return {
     title: `${report.clinicName} ${report.from} to ${report.to}`,
     columns: [
       { header: 'Date', key: 'date', width: 14 },
-      { header: 'Exam Count', key: 'examinationCount', width: 12 },
-      { header: 'Exam Income', key: 'examinationIncome', width: 16, numeric: true },
-      { header: 'Consult Count', key: 'consultationCount', width: 14 },
-      { header: 'Consult Income', key: 'consultationIncome', width: 18, numeric: true },
+      ...serviceColumns,
       { header: 'Daily total', key: 'total', width: 16, numeric: true },
     ],
-    rows: report.rows.map((row) => ({
-      date: row.date,
-      examinationCount: row.examinationCount,
-      examinationIncome: moneyForExport(row.examinationIncome),
-      consultationCount: row.consultationCount,
-      consultationIncome: moneyForExport(row.consultationIncome),
-      total: moneyForExport(row.totalDailyIncome),
-    })),
-    totals: {
-      date: 'Total',
-      examinationCount: report.totals.examinationCount,
-      examinationIncome: moneyForExport(report.totals.examinationIncome),
-      consultationCount: report.totals.consultationCount,
-      consultationIncome: moneyForExport(report.totals.consultationIncome),
-      total: moneyForExport(report.totals.totalIncome),
-    },
+    rows: report.rows.map((row) => {
+      const record: Record<string, string | number> = {
+        date: row.date,
+        total: moneyForExport(row.totalDailyIncome),
+      };
+      for (const service of report.byService) {
+        const line = row.lines.find((item) => item.serviceId === service.serviceId);
+        record[`service_${service.serviceId}`] = moneyForExport(line?.lineTotal ?? '0.00');
+      }
+      return record;
+    }),
+    totals: (() => {
+      const record: Record<string, string | number> = {
+        date: 'Total',
+        total: moneyForExport(report.totals.totalIncome),
+      };
+      for (const service of report.byService) {
+        record[`service_${service.serviceId}`] = moneyForExport(service.income);
+      }
+      return record;
+    })(),
   };
 }
 
