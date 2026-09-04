@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useAppState } from '../lib/app-state';
-import { useAnnual, useDailyEntry, useMonthly } from '../lib/queries';
+import { useAnnual, useCustomReport, useDailyEntry, useMonthly } from '../lib/queries';
 import { ApiError } from '../lib/api';
 import {
   firstOfMonth,
@@ -40,12 +40,12 @@ import { CompositionChart, DailyTrendChart, MonthlyTrendChart } from '../compone
  * prints to PDF through the browser.
  */
 
-type Tab = 'daily' | 'monthly' | 'annual';
+type Tab = 'daily' | 'monthly' | 'custom' | 'annual';
 
 function Tabs({ value, onChange }: { value: Tab; onChange: (tab: Tab) => void }) {
   const { t } = useTranslation();
-  // Period reports ascend by scope (day, month, year).
-  const tabs: Tab[] = ['daily', 'monthly', 'annual'];
+  // Period reports ascend by scope (day, month, custom, year).
+  const tabs: Tab[] = ['daily', 'monthly', 'custom', 'annual'];
 
   return (
     <div className="no-print -mx-4 overflow-x-auto px-4">
@@ -624,6 +624,195 @@ function AnnualReport() {
   );
 }
 
+function CustomReport() {
+  const { t } = useTranslation();
+  const { clinicId, language } = useAppState();
+  const [from, setFrom] = useState(firstOfMonth(todayIso));
+  const [to, setTo] = useState(lastOfMonth(todayIso));
+  const report = useCustomReport(clinicId, from, to);
+  const [expanded, setExpanded] = useState<string | null>(null);
+
+  const toggle = (date: string) => setExpanded((current) => (current === date ? null : date));
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex gap-2">
+          <DatePicker id="custom-from" value={from} onChange={setFrom} />
+          <DatePicker id="custom-to" value={to} onChange={setTo} />
+        </div>
+        <ExportBar />
+      </div>
+
+      {report.isPending && <Spinner />}
+
+      {report.data && (
+        <div className="px-1 no-print">
+          <p className="text-lg font-semibold text-ink">{report.data.clinicName}</p>
+          <p className="text-sm text-muted">
+            {from} - {to}
+          </p>
+        </div>
+      )}
+
+      {report.error && <ErrorNotice error={report.error} />}
+
+      {report.data && report.data.rows.length === 0 && (
+        <Card className="flex h-32 items-center justify-center p-4">
+          <EmptyState message={t('common.noData')} />
+        </Card>
+      )}
+
+      {report.data && report.data.rows.length > 0 && (
+        <>
+          <Card className="bg-brand-50 no-print">
+            <StatRow
+              strong
+              label={t('common.totalIncome')}
+              value={<Money value={report.data.totals.totalIncome} />}
+            />
+            <hr className="border-line" />
+            <div className="flex">
+              <div className="flex-1 border-r border-line">
+                <StatRow
+                  label={t('reports.examIncome')}
+                  value={<Money value={report.data.totals.examinationIncome} />}
+                />
+              </div>
+              <div className="flex-1">
+                <StatRow
+                  label={t('reports.consultIncome')}
+                  value={<Money value={report.data.totals.consultationIncome} />}
+                />
+              </div>
+            </div>
+          </Card>
+
+          <ul className="flex flex-col gap-2 lg:hidden print:hidden">
+            {report.data.rows.map((row) => (
+              <li key={row.date}>
+                <Card className="overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => toggle(row.date)}
+                    className="flex w-full items-center justify-between p-4"
+                  >
+                    <div className="flex flex-col items-start gap-1">
+                      <span className="font-semibold text-ink">
+                        {formatDayLabel(row.date, language)}
+                      </span>
+                      <span className="text-sm text-muted">{formatFullDate(row.date, language)}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="tabnum font-bold text-ink">
+                        <Money value={row.totalDailyIncome} />
+                      </span>
+                      <ChevronIcon
+                        className={`size-5 text-muted transition-transform ${
+                          expanded === row.date ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </div>
+                  </button>
+
+                  {expanded === row.date && (
+                    <div className="border-t border-line bg-canvas">
+                      <table className="w-full text-sm">
+                        <tbody className="divide-y divide-line">
+                          {row.lines.map((line) => (
+                            <tr key={line.serviceId}>
+                              <td className="px-4 py-3 text-ink">
+                                {language === 'ar' ? line.serviceNameAr : line.serviceNameEn}
+                              </td>
+                              <td className="tabnum px-4 py-3 text-end">
+                                {formatCount(line.quantity)}
+                              </td>
+                              <td className="tabnum px-4 py-3 text-end font-medium">
+                                <Money value={line.lineTotal} />
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                        <tfoot className="border-t-2 border-line font-semibold">
+                          <tr>
+                            <td className="px-4 py-3" colSpan={2}>
+                              {t('common.total')}
+                            </td>
+                            <td className="tabnum px-4 py-3 text-end">
+                              <Money value={row.totalDailyIncome} />
+                            </td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  )}
+                </Card>
+              </li>
+            ))}
+          </ul>
+
+          <Card className="hidden overflow-x-auto lg:block print:block">
+            <table className="min-w-full text-sm">
+              <thead className="bg-canvas text-xs tracking-wide text-muted uppercase">
+                <tr>
+                  <th className="px-4 py-3 text-start font-semibold">{t('common.date')}</th>
+                  <th className="px-4 py-3 text-end font-semibold">{t('common.count')}</th>
+                  <th className="px-4 py-3 text-end font-semibold">{t('reports.examIncome')}</th>
+                  <th className="px-4 py-3 text-end font-semibold">{t('common.count')}</th>
+                  <th className="px-4 py-3 text-end font-semibold">{t('reports.consultIncome')}</th>
+                  <th className="px-4 py-3 text-end font-semibold">{t('common.total')}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line">
+                {report.data.rows.map((row) => (
+                  <tr key={row.date}>
+                    <td className="px-4 py-2.5 text-ink">{formatFullDate(row.date, language)}</td>
+                    <td className="tabnum px-4 py-2.5 text-end text-muted">
+                      {formatCount(row.examinationCount)}
+                    </td>
+                    <td className="tabnum px-4 py-2.5 text-end">
+                      <Money value={row.examinationIncome} />
+                    </td>
+                    <td className="tabnum px-4 py-2.5 text-end text-muted">
+                      {formatCount(row.consultationCount)}
+                    </td>
+                    <td className="tabnum px-4 py-2.5 text-end">
+                      <Money value={row.consultationIncome} />
+                    </td>
+                    <td className="tabnum px-4 py-2.5 text-end font-semibold">
+                      <Money value={row.totalDailyIncome} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot className="border-t-2 border-line bg-canvas font-bold">
+                <tr>
+                  <td className="px-4 py-3">{t('common.total')}</td>
+                  <td className="tabnum px-4 py-3 text-end text-muted">
+                    {formatCount(report.data.totals.examinationCount)}
+                  </td>
+                  <td className="tabnum px-4 py-3 text-end">
+                    <Money value={report.data.totals.examinationIncome} />
+                  </td>
+                  <td className="tabnum px-4 py-3 text-end text-muted">
+                    {formatCount(report.data.totals.consultationCount)}
+                  </td>
+                  <td className="tabnum px-4 py-3 text-end">
+                    <Money value={report.data.totals.consultationIncome} />
+                  </td>
+                  <td className="tabnum px-4 py-3 text-end">
+                    <Money value={report.data.totals.totalIncome} />
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </Card>
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function Reports() {
   const { t } = useTranslation();
   const [tab, setTab] = useState<Tab>('monthly');
@@ -637,6 +826,7 @@ export default function Reports() {
 
       {tab === 'daily' && <DailyReport />}
       {tab === 'monthly' && <MonthlyReport />}
+      {tab === 'custom' && <CustomReport />}
       {tab === 'annual' && <AnnualReport />}
     </div>
   );
