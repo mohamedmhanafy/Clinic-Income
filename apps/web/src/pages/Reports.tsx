@@ -87,15 +87,13 @@ function DailyReport() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-end justify-between gap-3">
+      <div className="flex items-center justify-between gap-3">
         <div className="no-print w-40 shrink-0">
-          <Field label={t('common.date')} htmlFor="report-date">
-            <DatePicker
-              id="report-date"
-              value={date}
-              onChange={(value) => value && setDate(value)}
-            />
-          </Field>
+          <DatePicker
+            id="report-date"
+            value={date}
+            onChange={(value) => value && setDate(value)}
+          />
         </div>
         <ExportBar />
       </div>
