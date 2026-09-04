@@ -180,7 +180,7 @@ function DailyReport() {
                   <th className="px-4 py-3 text-start font-semibold">{t('common.service')}</th>
                   <th className="px-4 py-3 text-end font-semibold">{t('common.count')}</th>
                   <th className="px-4 py-3 text-end font-semibold">{t('common.fee')}</th>
-                  <th className="px-4 py-3 text-end font-semibold">{t('common.income')}</th>
+                  <th className="px-4 py-3 text-end font-semibold">{t('common.total')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
