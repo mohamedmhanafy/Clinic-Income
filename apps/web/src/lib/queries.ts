@@ -135,18 +135,26 @@ export function useUpdateClinic() {
 
 export function useCreateService() {
   const client = useQueryClient();
+  const invalidate = useInvalidateIncome();
   return useMutation({
     mutationFn: (input: ServiceCreateInput) => api.services.create(input),
-    onSuccess: () => void client.invalidateQueries({ queryKey: ['services'] }),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: ['services'] });
+      invalidate();
+    },
   });
 }
 
 export function useUpdateService() {
   const client = useQueryClient();
+  const invalidate = useInvalidateIncome();
   return useMutation({
     mutationFn: ({ id, input }: { id: number; input: ServiceUpdateInput }) =>
       api.services.update(id, input),
-    onSuccess: () => void client.invalidateQueries({ queryKey: ['services'] }),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: ['services'] });
+      invalidate();
+    },
   });
 }
 
@@ -165,9 +173,13 @@ export function useDeleteClinic() {
 
 export function useDeleteService() {
   const client = useQueryClient();
+  const invalidate = useInvalidateIncome();
   return useMutation({
     mutationFn: (id: number) => api.services.remove(id),
-    onSuccess: () => void client.invalidateQueries({ queryKey: ['services'] }),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: ['services'] });
+      invalidate();
+    },
   });
 }
 
