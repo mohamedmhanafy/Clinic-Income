@@ -95,9 +95,6 @@ export default function SettingsPricing() {
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-xl font-bold text-ink">{t('settings.pricingTitle')}</h1>
-        <Button onClick={() => openSheet()} disabled={activeServices.length === 0}>
-          {t('settings.addFee')}
-        </Button>
       </div>
 
       {(prices.isPending || services.isPending) && <Spinner />}
