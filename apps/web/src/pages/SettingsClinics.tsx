@@ -127,15 +127,26 @@ export default function SettingsClinics() {
             />
           </Field>
 
-          <Field label={t('common.status')} htmlFor="clinic-status">
-            <Select
-              id="clinic-status"
-              value={status}
-              onChange={(event) => setStatus(event.target.value as 'ACTIVE' | 'INACTIVE')}
-            >
-              <option value="ACTIVE">{t('common.active')}</option>
-              <option value="INACTIVE">{t('common.inactive')}</option>
-            </Select>
+          <Field label={t('common.status')}>
+            <div className="flex overflow-hidden rounded-xl border border-line">
+              {(['ACTIVE', 'INACTIVE'] as const).map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setStatus(value)}
+                  className={[
+                    'tap flex-1 py-3 text-sm font-semibold transition-colors',
+                    status === value
+                      ? value === 'ACTIVE'
+                        ? 'bg-brand-600 text-white'
+                        : 'bg-[--color-danger] text-white'
+                      : 'bg-white text-muted',
+                  ].join(' ')}
+                >
+                  {value === 'ACTIVE' ? t('common.active') : t('common.inactive')}
+                </button>
+              ))}
+            </div>
           </Field>
 
           {mutationError && <ErrorNotice message={mutationError} />}
