@@ -3,6 +3,7 @@ import type {
   DashboardSummaryDto,
   MonthlyReportDto,
   MonthlyReportRowDto,
+  CustomReportDto,
 } from '@clinic/shared';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../prisma.js';
@@ -146,6 +147,76 @@ export async function getDashboardSummary(
         quantity: row.quantity,
         income: toMoney(row.income),
       })),
+  };
+}
+
+export async function getCustomReport(
+  clinicId: number,
+  from: string,
+  to: string,
+): Promise<CustomReportDto> {
+  const clinic = await requireClinic(clinicId);
+
+  const [activities, totals, workingDays, total] = await Promise.all([
+    prisma.dailyActivity.findMany({
+      where: {
+        clinicId,
+        activityDate: { gte: toDbDate(from), lte: toDbDate(to) },
+      },
+      include: { lines: { include: { service: true } } },
+      orderBy: { activityDate: 'asc' },
+    }),
+    serviceTotals(clinicId, from, to),
+    countWorkingDays(clinicId, from, to),
+    totalIncome(clinicId, from, to),
+  ]);
+
+  const rows: MonthlyReportRowDto[] = activities
+    .filter((activity) => activity.totalIncome.greaterThan(0))
+    .map((activity) => {
+      const lines = activity.lines
+        .map(toLineDto)
+        .sort((a, b) => a.sortOrder - b.sortOrder || a.serviceId - b.serviceId);
+      const examination = lines.find((line) => line.serviceCode === EXAMINATION_CODE);
+      const consultation = lines.find((line) => line.serviceCode === CONSULTATION_CODE);
+      const date = fromDbDate(activity.activityDate);
+      return {
+        date,
+        dayOfMonth: Number(date.slice(8, 10)),
+        examinationCount: examination?.quantity ?? 0,
+        examinationIncome: examination?.lineTotal ?? '0.00',
+        consultationCount: consultation?.quantity ?? 0,
+        consultationIncome: consultation?.lineTotal ?? '0.00',
+        totalDailyIncome: toMoney(activity.totalIncome),
+        lines,
+      };
+    });
+
+  const examinationTotal = pickByCode(totals, EXAMINATION_CODE);
+  const consultationTotal = pickByCode(totals, CONSULTATION_CODE);
+
+  return {
+    clinicId,
+    clinicName: clinic.name,
+    from,
+    to,
+    rows,
+    totals: {
+      examinationCount: examinationTotal?.quantity ?? 0,
+      examinationIncome: toMoney(examinationTotal?.income ?? 0),
+      consultationCount: consultationTotal?.quantity ?? 0,
+      consultationIncome: toMoney(consultationTotal?.income ?? 0),
+      totalIncome: toMoney(total),
+      workingDays,
+    },
+    byService: totals.map((row) => ({
+      serviceId: row.service_id,
+      serviceCode: row.code,
+      serviceNameEn: row.name_en,
+      serviceNameAr: row.name_ar,
+      quantity: row.quantity,
+      income: toMoney(row.income),
+    })),
   };
 }
 
