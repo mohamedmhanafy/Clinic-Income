@@ -61,24 +61,6 @@ function truncateLabel(value: string, max = 10): string {
   return value.length > max ? `${value.slice(0, max - 1)}…` : value;
 }
 
-/** A thin vertical line through the hovered bar, the same cursor a line chart shows, instead
-    of the full-width gray rectangle Recharts draws by default for a bar chart - that default
-    reads as a stray gray bar on a zero-income day since there's no colored bar to mask it. */
-function BarLineCursor({
-  x = 0,
-  y = 0,
-  width = 0,
-  height = 0,
-}: {
-  x?: number;
-  y?: number;
-  width?: number;
-  height?: number;
-}) {
-  const centerX = x + width / 2;
-  return <line x1={centerX} y1={y} x2={centerX} y2={y + height} stroke={GRID} strokeWidth={1} />;
-}
-
 function ChartTooltip({
   active,
   payload,
@@ -113,7 +95,6 @@ export function DailyTrendChart({
       <BarChart data={points} margin={{ top: 18, right: 8, bottom: 0, left: 8 }}>
         <XAxis dataKey="day" {...axisProps} interval="preserveStartEnd" minTickGap={12} />
         <YAxis hide />
-        <Tooltip content={<ChartTooltip />} cursor={<BarLineCursor />} />
         <Bar dataKey="income" fill={BRAND} radius={[3, 3, 0, 0]}>
           <LabelList
             dataKey="income"
@@ -139,7 +120,6 @@ export function MonthlyTrendChart({
       <BarChart data={points} margin={{ top: 18, right: 8, bottom: 0, left: 8 }}>
         <XAxis dataKey="label" {...axisProps} interval="preserveStartEnd" minTickGap={16} />
         <YAxis hide />
-        <Tooltip content={<ChartTooltip />} cursor={<BarLineCursor />} />
         <Bar dataKey="income" fill={BRAND} radius={[3, 3, 0, 0]}>
           <LabelList
             dataKey="income"
