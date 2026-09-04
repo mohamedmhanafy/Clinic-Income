@@ -240,7 +240,7 @@ export default function DailyEntry() {
 
       {entry.data && (
         <>
-          {exists && (
+          {exists && !savable.every((row) => row.quantity === 0) && (
             <Notice tone="info">
               {t('daily.existingRecord')}
               {entry.data.activity.updatedAt && (

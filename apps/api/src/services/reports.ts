@@ -167,24 +167,29 @@ export async function getMonthlyReport(
     totalIncome(clinicId, from, to),
   ]);
 
-  const rows: MonthlyReportRowDto[] = activities.map((activity) => {
-    const lines = activity.lines
-      .map(toLineDto)
-      .sort((a, b) => a.sortOrder - b.sortOrder || a.serviceId - b.serviceId);
-    const examination = lines.find((line) => line.serviceCode === EXAMINATION_CODE);
-    const consultation = lines.find((line) => line.serviceCode === CONSULTATION_CODE);
-    const date = fromDbDate(activity.activityDate);
-    return {
-      date,
-      dayOfMonth: Number(date.slice(8, 10)),
-      examinationCount: examination?.quantity ?? 0,
-      examinationIncome: examination?.lineTotal ?? '0.00',
-      consultationCount: consultation?.quantity ?? 0,
-      consultationIncome: consultation?.lineTotal ?? '0.00',
-      totalDailyIncome: toMoney(activity.totalIncome),
-      lines,
-    };
-  });
+  const rows: MonthlyReportRowDto[] = activities
+    // Exclude zero-income days - a day with all quantities at zero has no useful
+    // information and should have been deleted (the UI now auto-deletes on update-to-zero,
+    // but older records may still exist in the database).
+    .filter((activity) => activity.totalIncome.greaterThan(0))
+    .map((activity) => {
+      const lines = activity.lines
+        .map(toLineDto)
+        .sort((a, b) => a.sortOrder - b.sortOrder || a.serviceId - b.serviceId);
+      const examination = lines.find((line) => line.serviceCode === EXAMINATION_CODE);
+      const consultation = lines.find((line) => line.serviceCode === CONSULTATION_CODE);
+      const date = fromDbDate(activity.activityDate);
+      return {
+        date,
+        dayOfMonth: Number(date.slice(8, 10)),
+        examinationCount: examination?.quantity ?? 0,
+        examinationIncome: examination?.lineTotal ?? '0.00',
+        consultationCount: consultation?.quantity ?? 0,
+        consultationIncome: consultation?.lineTotal ?? '0.00',
+        totalDailyIncome: toMoney(activity.totalIncome),
+        lines,
+      };
+    });
 
   const examinationTotal = pickByCode(totals, EXAMINATION_CODE);
   const consultationTotal = pickByCode(totals, CONSULTATION_CODE);
