@@ -398,6 +398,11 @@ function MonthlyReport() {
                       return (
                         <td key={service.serviceId} className="tabnum px-4 py-2.5 text-end">
                           <Money value={line?.lineTotal ?? '0'} />
+                          {line && line.quantity > 0 && (
+                            <span className="block text-[10px] font-normal text-muted">
+                              ({formatCount(line.quantity)})
+                            </span>
+                          )}
                         </td>
                       );
                     })}
