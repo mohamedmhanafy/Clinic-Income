@@ -88,6 +88,8 @@ export default function SettingsPricing() {
   const scheduleError = schedule.error instanceof ApiError ? schedule.error.message : null;
   const feeValid = /^\d+(\.\d{1,2})?$/.test(fee.trim());
   const hasCurrentPrice = currentFees.some((row) => row.service.id === serviceId && row.price !== null);
+  const currentFeePlaceholder =
+    currentFees.find((row) => row.service.id === serviceId)?.price?.fee ?? '300';
 
   return (
     <div className="flex flex-col gap-5">
@@ -194,7 +196,7 @@ export default function SettingsPricing() {
               id="price-fee"
               type="text"
               inputMode="decimal"
-              placeholder="300"
+              placeholder={currentFeePlaceholder}
               value={fee}
               onChange={(event) => setFee(event.target.value.replace(/[^\d.]/g, ''))}
             />
