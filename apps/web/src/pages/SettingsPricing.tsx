@@ -63,9 +63,17 @@ export default function SettingsPricing() {
     });
   }, [activeServices, prices.data]);
 
+  /** The fee a new entry would be priced at today, so editing a schedule starts from the
+      current figure instead of a blank field the user has to look up and retype. */
+  const feeForService = (id: number | ''): string => {
+    if (id === '') return '';
+    return currentFees.find((row) => row.service.id === id)?.price?.fee ?? '';
+  };
+
   const openSheet = (preselect?: number) => {
-    setServiceId(preselect ?? activeServices[0]?.id ?? '');
-    setFee('');
+    const id = preselect ?? activeServices[0]?.id ?? '';
+    setServiceId(id);
+    setFee(feeForService(id));
     setEffectiveFrom(todayIso());
     schedule.reset();
     setOpen(true);
@@ -179,7 +187,11 @@ export default function SettingsPricing() {
             <Select
               id="price-service"
               value={serviceId}
-              onChange={(event) => setServiceId(Number(event.target.value))}
+              onChange={(event) => {
+                const id = Number(event.target.value);
+                setServiceId(id);
+                setFee(feeForService(id));
+              }}
             >
               {activeServices.map((service) => (
                 <option key={service.id} value={service.id}>
