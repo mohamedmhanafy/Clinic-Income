@@ -32,6 +32,7 @@ interface ServiceTotalRow {
   name_en: string;
   name_ar: string;
   sort_order: number;
+  status: string;
   quantity: number;
   income: Prisma.Decimal;
 }
@@ -50,6 +51,7 @@ async function serviceTotals(
            s.name_en                           AS name_en,
            s.name_ar                           AS name_ar,
            s.sort_order                        AS sort_order,
+           s.status                            AS status,
            COALESCE(SUM(pl.quantity), 0)::int  AS quantity,
            COALESCE(SUM(pl.line_total), 0)     AS income
       FROM services s
@@ -61,7 +63,7 @@ async function serviceTotals(
                 AND a.activity_date BETWEEN ${from}::date AND ${to}::date
            ) pl ON pl.service_id = s.id
      WHERE s.clinic_id = ${clinicId}
-     GROUP BY s.id, s.code, s.name_en, s.name_ar, s.sort_order
+     GROUP BY s.id, s.code, s.name_en, s.name_ar, s.sort_order, s.status
      ORDER BY s.sort_order, s.id
   `;
 }
@@ -134,14 +136,16 @@ export async function getDashboardSummary(
     examinationCount: examination?.quantity ?? 0,
     consultationCount: consultation?.quantity ?? 0,
     workingDays,
-    byService: totals.map((row) => ({
-      serviceId: row.service_id,
-      serviceCode: row.code,
-      serviceNameEn: row.name_en,
-      serviceNameAr: row.name_ar,
-      quantity: row.quantity,
-      income: toMoney(row.income),
-    })),
+    byService: totals
+      .filter((row) => row.status === 'ACTIVE')
+      .map((row) => ({
+        serviceId: row.service_id,
+        serviceCode: row.code,
+        serviceNameEn: row.name_en,
+        serviceNameAr: row.name_ar,
+        quantity: row.quantity,
+        income: toMoney(row.income),
+      })),
   };
 }
 
