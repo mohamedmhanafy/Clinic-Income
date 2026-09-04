@@ -627,8 +627,8 @@ function AnnualReport() {
 function CustomReport() {
   const { t } = useTranslation();
   const { clinicId, language } = useAppState();
-  const [from, setFrom] = useState(firstOfMonth(todayIso));
-  const [to, setTo] = useState(lastOfMonth(todayIso));
+  const [from, setFrom] = useState(todayIso);
+  const [to, setTo] = useState(todayIso);
   const report = useCustomReport(clinicId, from, to);
   const [expanded, setExpanded] = useState<string | null>(null);
 
