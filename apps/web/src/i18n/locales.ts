@@ -138,8 +138,8 @@ export const en = {
     deleteService: 'Delete service',
     deleteServiceConfirm:
       'Delete this service and its price history permanently? If it has recorded income entries the server will reject this — set it to Inactive instead.',
-    initialPrices: 'Initial price (optional)',
-    initialPricesHint: 'Enter a starting fee. Leave blank to set prices later under Pricing.',
+    initialPrices: 'Initial price',
+    initialPricesHint: 'Set the starting fee for this service.',
     pricingTitle: 'Pricing',
     currentFees: 'Current fees',
     scheduleChange: 'Schedule a fee change',
@@ -298,8 +298,8 @@ export const ar: typeof en = {
     deleteService: 'حذف الخدمة',
     deleteServiceConfirm:
       'حذف هذه الخدمة وسجل أسعارها نهائياً؟ إذا كانت لها إيرادات مسجلة سيرفض الخادم ذلك، وينبغي تعيينها كغير نشطة عوضاً.',
-    initialPrices: 'السعر الابتدائي (اختياري)',
-    initialPricesHint: 'أدخل سعراً ابتدائياً. اترك فارغاً لتحديد الأسعار لاحقاً من صفحة الأسعار.',
+    initialPrices: 'السعر الابتدائي',
+    initialPricesHint: 'حدد السعر الابتدائي لهذه الخدمة.',
     pricingTitle: 'الأسعار',
     currentFees: 'الأسعار الحالية',
     scheduleChange: 'جدولة تغيير سعر',

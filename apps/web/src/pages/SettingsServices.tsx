@@ -91,7 +91,12 @@ export default function SettingsServices() {
 
   const pending = create.isPending || update.isPending || schedule.isPending;
   const mutationError = create.error instanceof ApiError ? create.error.message : update.error instanceof ApiError ? update.error.message : null;
-  const valid = clinicId !== null && form.nameEn.trim() && form.nameAr.trim() && (editing !== null || form.code.trim());
+  const initialFeeValid = /^\d+(\.\d{1,2})?$/.test(initialFee.trim());
+  const valid =
+    clinicId !== null &&
+    form.nameEn.trim() &&
+    form.nameAr.trim() &&
+    (editing !== null || (form.code.trim() && initialFeeValid));
 
   return (
     <div className="flex flex-col gap-4">
@@ -128,7 +133,7 @@ export default function SettingsServices() {
         <div className="flex flex-col gap-4">
           {!editing && (
             <Field label={t('settings.serviceCode')} hint={t('settings.serviceCodeHint')} htmlFor="service-code">
-              <Input id="service-code" value={form.code} autoFocus placeholder="FOLLOW_UP"
+              <Input id="service-code" value={form.code} placeholder="FOLLOW_UP"
                 onChange={(event) => setForm((current) => ({ ...current, code: event.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '_') }))} />
             </Field>
           )}
