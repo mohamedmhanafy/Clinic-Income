@@ -1,4 +1,6 @@
 import {
+  Bar,
+  BarChart,
   Cell,
   LabelList,
   Line,
@@ -61,6 +63,24 @@ function truncateLabel(value: string, max = 10): string {
   return value.length > max ? `${value.slice(0, max - 1)}…` : value;
 }
 
+/** A thin vertical line through the hovered bar, the same cursor a line chart shows, instead
+    of the full-width gray rectangle Recharts draws by default for a bar chart - that default
+    reads as a stray gray bar on a zero-income day since there's no colored bar to mask it. */
+function BarLineCursor({
+  x = 0,
+  y = 0,
+  width = 0,
+  height = 0,
+}: {
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+}) {
+  const centerX = x + width / 2;
+  return <line x1={centerX} y1={y} x2={centerX} y2={y + height} stroke={MUTED} strokeWidth={1} />;
+}
+
 function ChartTooltip({
   active,
   payload,
@@ -92,26 +112,19 @@ export function DailyTrendChart({
 
   return (
     <ResponsiveContainer width="100%" height={190}>
-      <LineChart data={points} margin={{ top: 18, right: 8, bottom: 0, left: 8 }}>
+      <BarChart data={points} margin={{ top: 18, right: 8, bottom: 0, left: 8 }}>
         <XAxis dataKey="day" {...axisProps} interval="preserveStartEnd" minTickGap={12} />
         <YAxis hide />
-        <Tooltip content={<ChartTooltip />} />
-        <Line
-          type="monotone"
-          dataKey="income"
-          stroke={BRAND}
-          strokeWidth={2.5}
-          dot={{ r: 3, fill: BRAND }}
-          activeDot={{ r: 5 }}
-        >
+        <Tooltip content={<ChartTooltip />} cursor={<BarLineCursor />} />
+        <Bar dataKey="income" fill={BRAND} radius={[3, 3, 0, 0]}>
           <LabelList
             dataKey="income"
             position="top"
             formatter={(value: number) => compactNonZero(value)}
             style={dataLabelStyle}
           />
-        </Line>
-      </LineChart>
+        </Bar>
+      </BarChart>
     </ResponsiveContainer>
   );
 }
