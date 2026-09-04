@@ -22,6 +22,7 @@ import {
   Sheet,
   Spinner,
 } from '../components/ui';
+import { DatePicker } from '../components/DatePicker';
 
 /**
  * Fee management.
@@ -203,11 +204,10 @@ export default function SettingsPricing() {
             hint={t('settings.scheduleHint')}
             htmlFor="price-from"
           >
-            <Input
+            <DatePicker
               id="price-from"
-              type="date"
               value={effectiveFrom}
-              onChange={(event) => event.target.value && setEffectiveFrom(event.target.value)}
+              onChange={(value) => value && setEffectiveFrom(value)}
             />
           </Field>
 

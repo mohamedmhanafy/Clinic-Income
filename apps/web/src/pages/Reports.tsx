@@ -87,11 +87,10 @@ function DailyReport() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="w-full max-w-xs">
           <Field label={t('common.date')} htmlFor="report-date">
-            <Input
+            <DatePicker
               id="report-date"
-              type="date"
               value={date}
-              onChange={(event) => event.target.value && setDate(event.target.value)}
+              onChange={(value) => value && setDate(value)}
             />
           </Field>
         </div>

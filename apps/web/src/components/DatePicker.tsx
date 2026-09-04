@@ -20,7 +20,9 @@ const CONTROL_CLASS =
 
 const toDate = (iso: string | undefined): Date | null => {
   if (!iso) return null;
-  const [y, m, d] = iso.split('-').map(Number);
+  const parts = iso.split('-').map(Number);
+  if (parts.length < 3) return null;
+  const [y, m, d] = parts as [number, number, number];
   if (isNaN(y) || isNaN(m) || isNaN(d)) return null;
   return new Date(y, m - 1, d);
 };
@@ -42,7 +44,7 @@ export const DatePicker = forwardRef<any, DatePickerProps>(
         <ReactDatePicker
           id={id}
           selected={toDate(value)}
-          onChange={(date) => onChange(toIso(date))}
+          onChange={(date: Date | null) => onChange(toIso(date))}
           dateFormat="dd/MM/yyyy"
           className={`${CONTROL_CLASS} ${className}`}
           locale={language === 'ar' ? ar : enUS}

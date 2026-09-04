@@ -17,6 +17,7 @@ import {
   Sheet,
   Spinner,
 } from '../components/ui';
+import { DatePicker } from '../components/DatePicker';
 
 export default function SettingsServices() {
   const { t } = useTranslation();
@@ -157,7 +158,7 @@ export default function SettingsServices() {
               <p className="text-sm font-semibold text-ink">{t('settings.initialPrices')}</p>
               <p className="text-xs text-muted">{t('settings.initialPricesHint')}</p>
               <Field label={t('settings.effectiveFrom')} htmlFor="init-price-from">
-                <Input id="init-price-from" type="date" value={feesFrom} onChange={(event) => event.target.value && setFeesFrom(event.target.value)} />
+                <DatePicker id="init-price-from" value={feesFrom} onChange={(value) => value && setFeesFrom(value)} />
               </Field>
               <Field label={t('settings.newFee')} htmlFor="init-fee">
                 <Input id="init-fee" type="text" inputMode="decimal" placeholder="—" value={initialFee}
