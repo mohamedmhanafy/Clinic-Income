@@ -158,13 +158,6 @@ export const annualQuerySchema = z.object({
   format: exportFormatSchema,
 });
 
-export const customQuerySchema = z.object({
-  clinicId: idSchema,
-  from: isoDateSchema,
-  to: isoDateSchema,
-  format: exportFormatSchema,
-});
-
 export const dashboardQuerySchema = z.object({
   clinicId: idSchema,
   year: yearSchema,

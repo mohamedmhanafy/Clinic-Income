@@ -1,24 +1,13 @@
 import { Router, type Response } from 'express';
-import type {
-  AnnualReportDto,
-  CustomReportDto,
-  ExportFormat,
-  MonthlyReportDto,
-} from '@clinic/shared';
+import type { AnnualReportDto, ExportFormat, MonthlyReportDto } from '@clinic/shared';
 import {
   annualQuerySchema,
-  customQuerySchema,
   dailyReportQuerySchema,
   dashboardQuerySchema,
   monthQuerySchema,
 } from '@clinic/shared';
 import { getQuery, validateQuery } from '../middleware/validate.js';
-import {
-  getAnnualReport,
-  getCustomReport,
-  getDashboardSummary,
-  getMonthlyReport,
-} from '../services/reports.js';
+import { getAnnualReport, getDashboardSummary, getMonthlyReport } from '../services/reports.js';
 import { getDailyEntryView } from '../services/daily.js';
 import { moneyForExport, toCsv, toXlsx, type ExportSheet } from '../lib/export.js';
 import { monthRange } from '../lib/date.js';
@@ -165,63 +154,6 @@ reportsRouter.get('/monthly', validateQuery(monthQuerySchema), async (_req, res)
   if (await sendExport(res, format, monthlySheet(report), filename)) return;
   res.json(report);
 });
-
-/* -------------------------------------------------------------------------- */
-/* Custom report                                                               */
-/* -------------------------------------------------------------------------- */
-
-function customSheet(report: CustomReportDto): ExportSheet {
-  const serviceColumns = report.byService.map((service) => ({
-    header: service.serviceNameEn,
-    key: `service_${service.serviceId}`,
-    width: 16,
-    numeric: true,
-  }));
-
-  return {
-    title: `${report.clinicName} ${report.from} to ${report.to}`,
-    columns: [
-      { header: 'Date', key: 'date', width: 14 },
-      ...serviceColumns,
-      { header: 'Daily total', key: 'total', width: 16, numeric: true },
-    ],
-    rows: report.rows.map((row) => {
-      const record: Record<string, string | number> = {
-        date: row.date,
-        total: moneyForExport(row.totalDailyIncome),
-      };
-      for (const service of report.byService) {
-        const line = row.lines.find((item) => item.serviceId === service.serviceId);
-        record[`service_${service.serviceId}`] = moneyForExport(line?.lineTotal ?? '0.00');
-      }
-      return record;
-    }),
-    totals: (() => {
-      const record: Record<string, string | number> = {
-        date: 'Total',
-        total: moneyForExport(report.totals.totalIncome),
-      };
-      for (const service of report.byService) {
-        record[`service_${service.serviceId}`] = moneyForExport(service.income);
-      }
-      return record;
-    })(),
-  };
-}
-
-reportsRouter.get('/custom', validateQuery(customQuerySchema), async (_req, res) => {
-  const { clinicId, from, to, format } = getQuery<{
-    clinicId: number;
-    from: string;
-    to: string;
-    format: ExportFormat;
-  }>(res);
-  const report = await getCustomReport(clinicId, from, to);
-  const filename = `custom-${report.clinicName}-${from}-${to}`.replace(/\s+/g, '-');
-  if (await sendExport(res, format, customSheet(report), filename)) return;
-  res.json(report);
-});
-
 
 /* -------------------------------------------------------------------------- */
 /* Annual report                                                               */

@@ -158,30 +158,6 @@ export interface MonthlyReportDto {
 
 
 
-export interface CustomReportDto {
-  clinicId: number;
-  clinicName: string;
-  from: string;
-  to: string;
-  rows: MonthlyReportRowDto[];
-  totals: {
-    examinationCount: number;
-    examinationIncome: Money;
-    consultationCount: number;
-    consultationIncome: Money;
-    totalIncome: Money;
-    workingDays: number;
-  };
-  byService: Array<{
-    serviceId: number;
-    serviceCode: string;
-    serviceNameEn: string;
-    serviceNameAr: string;
-    quantity: number;
-    income: Money;
-  }>;
-}
-
 export interface AnnualReportDto {
   clinicId: number;
   clinicName: string;
