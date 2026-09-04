@@ -399,7 +399,7 @@ function MonthlyReport() {
                         <td key={service.serviceId} className="tabnum px-4 py-2.5 text-end">
                           <span className="inline-flex items-baseline gap-1.5 justify-end">
                             {line && line.quantity > 0 && (
-                              <span className="text-[10px] font-normal text-muted">
+                              <span className="text-xs font-normal text-muted">
                                 ({formatCount(line.quantity)})
                               </span>
                             )}
