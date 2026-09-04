@@ -31,20 +31,20 @@ export default function SettingsClinics() {
 
   const [editing, setEditing] = useState<ClinicDto | null>(null);
   const [creating, setCreating] = useState(false);
-  const [name, setName] = useState('');
-  const [status, setStatus] = useState<'ACTIVE' | 'INACTIVE'>('ACTIVE');
+  const [form, setForm] = useState({
+    name: '',
+    status: 'ACTIVE' as 'ACTIVE' | 'INACTIVE',
+  });
 
   const openCreate = () => {
-    setName('');
-    setStatus('ACTIVE');
+    setForm({ name: '', status: 'ACTIVE' });
     setEditing(null);
     setCreating(true);
     create.reset();
   };
 
   const openEdit = (clinic: ClinicDto) => {
-    setName(clinic.name);
-    setStatus(clinic.status);
+    setForm({ name: clinic.name, status: clinic.status });
     setCreating(false);
     setEditing(clinic);
     update.reset();
@@ -53,18 +53,17 @@ export default function SettingsClinics() {
   const close = () => {
     setCreating(false);
     setEditing(null);
-    setName('');
-    setStatus('ACTIVE');
+    setForm({ name: '', status: 'ACTIVE' });
   };
 
   const submit = async () => {
-    const trimmed = name.trim();
+    const trimmed = form.name.trim();
     if (!trimmed) return;
     try {
       if (editing) {
-        await update.mutateAsync({ id: editing.id, input: { name: trimmed, status } });
+        await update.mutateAsync({ id: editing.id, input: { name: trimmed, status: form.status } });
       } else {
-        await create.mutateAsync({ name: trimmed, status });
+        await create.mutateAsync({ name: trimmed, status: form.status });
       }
       close();
     } catch {
@@ -121,9 +120,9 @@ export default function SettingsClinics() {
           <Field label={t('settings.clinicName')} htmlFor="clinic-name">
             <Input
               id="clinic-name"
-              value={name}
+              value={form.name}
               autoFocus
-              onChange={(event) => setName(event.target.value)}
+              onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
             />
           </Field>
 
@@ -133,10 +132,10 @@ export default function SettingsClinics() {
                 <button
                   key={value}
                   type="button"
-                  onClick={() => setStatus(value)}
+                  onClick={() => setForm((current) => ({ ...current, status: value }))}
                   className={[
                     'tap flex-1 py-3 text-sm font-semibold transition-colors',
-                    status === value
+                    form.status === value
                       ? value === 'ACTIVE'
                         ? 'bg-brand-600 text-white'
                         : 'bg-red-600 text-white'
@@ -155,7 +154,7 @@ export default function SettingsClinics() {
             <Button variant="secondary" block onClick={close}>
               {t('common.cancel')}
             </Button>
-            <Button block disabled={pending || !name.trim()} onClick={() => void submit()}>
+            <Button block disabled={pending || !form.name.trim()} onClick={() => void submit()}>
               {pending ? t('common.saving') : t('common.save')}
             </Button>
           </div>
