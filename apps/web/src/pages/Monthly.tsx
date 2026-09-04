@@ -34,7 +34,6 @@ export default function Monthly() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-ink">{t('monthly.title')}</h1>
-          {report.data && <p className="text-sm text-muted">{report.data.clinicName}</p>}
         </div>
         <ExportBar />
       </div>
