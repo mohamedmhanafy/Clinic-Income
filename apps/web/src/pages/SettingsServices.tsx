@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   DndContext,
   PointerSensor,
@@ -12,7 +13,15 @@ import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } 
 import { CSS } from '@dnd-kit/utilities';
 import { useAppState } from '../lib/app-state';
 import type { ServiceDto } from '@clinic/shared';
-import { useClinics, useCreateService, useDeleteService, useServices, useUpdateService, useSchedulePriceChange } from '../lib/queries';
+import {
+  keys,
+  useClinics,
+  useCreateService,
+  useDeleteService,
+  useServices,
+  useUpdateService,
+  useSchedulePriceChange,
+} from '../lib/queries';
 import { ApiError } from '../lib/api';
 import { todayIso } from '../lib/format';
 import {
@@ -34,6 +43,7 @@ export default function SettingsServices() {
   const { t } = useTranslation();
   const { clinicId, setClinicId, language } = useAppState();
   
+  const queryClient = useQueryClient();
   const clinics = useClinics();
   const services = useServices(clinicId, true);
   const create = useCreateService();
@@ -71,17 +81,25 @@ export default function SettingsServices() {
     const newIndex = orderedServices.findIndex((service) => service.id === over.id);
     if (oldIndex === -1 || newIndex === -1) return;
 
-    const reordered = arrayMove(orderedServices, oldIndex, newIndex);
-    setOrderedServices(reordered);
-
-    const changed = reordered
+    const moved = arrayMove(orderedServices, oldIndex, newIndex);
+    const changed = moved
       .map((service, index) => ({ service, index }))
       .filter(({ service, index }) => service.sortOrder !== index);
 
+    // sortOrder is stamped onto the local copy right away so the dropped position sticks
+    // immediately, instead of waiting on the PATCH responses and the query invalidation
+    // they each trigger - which land at unpredictable times and briefly snap the list back
+    // to its pre-drop order before the fresh fetch arrives.
+    const withNewOrder = moved.map((service, index) => ({ ...service, sortOrder: index }));
+    setOrderedServices(withNewOrder);
     setIsReordering(true);
+
     void Promise.all(
       changed.map(({ service, index }) => reorder.mutateAsync({ id: service.id, input: { sortOrder: index } })),
-    ).finally(() => setIsReordering(false));
+    ).finally(() => {
+      if (clinicId !== null) queryClient.setQueryData(keys.services(clinicId, true), withNewOrder);
+      setIsReordering(false);
+    });
   };
 
   const openCreate = () => {
