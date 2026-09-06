@@ -8,6 +8,7 @@ function toClinicDto(clinic: Clinic): ClinicDto {
     id: clinic.id,
     name: clinic.name,
     status: clinic.status,
+    sortOrder: clinic.sortOrder,
     createdAt: clinic.createdAt.toISOString(),
     updatedAt: clinic.updatedAt.toISOString(),
   };
@@ -16,7 +17,7 @@ function toClinicDto(clinic: Clinic): ClinicDto {
 export async function listClinics(includeInactive = false): Promise<ClinicDto[]> {
   const clinics = await prisma.clinic.findMany({
     where: includeInactive ? {} : { status: 'ACTIVE' },
-    orderBy: [{ name: 'asc' }],
+    orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
   });
   return clinics.map(toClinicDto);
 }
@@ -46,7 +47,7 @@ async function assertNameAvailable(name: string, excludeId?: number): Promise<vo
 export async function createClinic(input: ClinicCreateInput): Promise<ClinicDto> {
   await assertNameAvailable(input.name);
   const clinic = await prisma.clinic.create({
-    data: { name: input.name, status: input.status },
+    data: { name: input.name, status: input.status, sortOrder: input.sortOrder },
   });
   return toClinicDto(clinic);
 }
@@ -61,6 +62,7 @@ export async function updateClinic(id: number, input: ClinicUpdateInput): Promis
     data: {
       ...(input.name !== undefined ? { name: input.name } : {}),
       ...(input.status !== undefined ? { status: input.status } : {}),
+      ...(input.sortOrder !== undefined ? { sortOrder: input.sortOrder } : {}),
     },
   });
   return toClinicDto(clinic);

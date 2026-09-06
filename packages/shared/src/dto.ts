@@ -13,6 +13,7 @@ export interface ClinicDto {
   id: number;
   name: string;
   status: Status;
+  sortOrder: number;
   createdAt: string;
   updatedAt: string;
 }

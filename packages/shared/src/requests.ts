@@ -21,6 +21,7 @@ export const clinicCreateSchema = z.object({
     .min(1, 'Clinic name is required')
     .max(120, 'Clinic name is too long'),
   status: statusSchema.default('ACTIVE'),
+  sortOrder: z.coerce.number().int().min(0).max(9999).default(0),
 });
 
 export const clinicUpdateSchema = clinicCreateSchema.partial().refine(

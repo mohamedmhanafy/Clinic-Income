@@ -292,7 +292,7 @@ function SortableServiceRow({
           type="button"
           {...attributes}
           {...listeners}
-          aria-label={t('settings.reorderService')}
+          aria-label={t('common.dragToReorder')}
           className="tap flex w-11 shrink-0 touch-none cursor-grab items-center justify-center text-muted active:cursor-grabbing"
         >
           <DragHandleIcon />
