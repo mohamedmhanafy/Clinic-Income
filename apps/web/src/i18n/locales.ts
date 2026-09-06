@@ -29,7 +29,6 @@ export const en = {
     delete: 'Delete',
     edit: 'Edit',
     add: 'Add',
-    dragToReorder: 'Drag to reorder',
     close: 'Close',
     loading: 'Loading...',
     retry: 'Try again',
@@ -135,6 +134,7 @@ export const en = {
     serviceCodeHint: 'A stable key such as FOLLOW_UP. Cannot be changed later.',
     nameEn: 'English name',
     nameAr: 'Arabic name',
+    reorderService: 'Drag to reorder',
     deleteService: 'Delete service',
     deleteServiceConfirm:
       'Delete this service and its price history permanently? If it has recorded income entries the server will reject this — set it to Inactive instead.',
@@ -189,7 +189,6 @@ export const ar: typeof en = {
     delete: 'حذف',
     edit: 'تعديل',
     add: 'إضافة',
-    dragToReorder: 'اسحب لإعادة الترتيب',
     close: 'إغلاق',
     loading: 'جارٍ التحميل...',
     retry: 'إعادة المحاولة',
@@ -295,6 +294,7 @@ export const ar: typeof en = {
     serviceCodeHint: 'رمز ثابت مثل FOLLOW_UP. لا يمكن تغييره لاحقاً.',
     nameEn: 'الاسم بالإنجليزية',
     nameAr: 'الاسم بالعربية',
+    reorderService: 'اسحب لإعادة الترتيب',
     deleteService: 'حذف الخدمة',
     deleteServiceConfirm:
       'حذف هذه الخدمة وسجل أسعارها نهائياً؟ إذا كانت لها إيرادات مسجلة سيرفض الخادم ذلك، وينبغي تعيينها كغير نشطة عوضاً.',

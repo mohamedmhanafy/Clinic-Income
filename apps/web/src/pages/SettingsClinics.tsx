@@ -1,18 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQueryClient } from '@tanstack/react-query';
-import {
-  DndContext,
-  PointerSensor,
-  closestCenter,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from '@dnd-kit/core';
-import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import type { ClinicDto } from '@clinic/shared';
-import { keys, useClinics, useCreateClinic, useDeleteClinic, useUpdateClinic } from '../lib/queries';
+import { useClinics, useCreateClinic, useDeleteClinic, useUpdateClinic } from '../lib/queries';
 import { ApiError } from '../lib/api';
 import {
   Badge,
@@ -22,10 +11,10 @@ import {
   Field,
   Input,
   Notice,
+  Select,
   Sheet,
   Spinner,
 } from '../components/ui';
-import { DragHandleIcon } from '../components/icons';
 
 /**
  * Clinic administration.
@@ -36,11 +25,9 @@ import { DragHandleIcon } from '../components/icons';
  */
 export default function SettingsClinics() {
   const { t } = useTranslation();
-  const queryClient = useQueryClient();
   const clinics = useClinics(true);
   const create = useCreateClinic();
   const update = useUpdateClinic();
-  const reorder = useUpdateClinic();
 
   const [editing, setEditing] = useState<ClinicDto | null>(null);
   const [creating, setCreating] = useState(false);
@@ -48,44 +35,6 @@ export default function SettingsClinics() {
     name: '',
     status: 'ACTIVE' as 'ACTIVE' | 'INACTIVE',
   });
-
-  const [orderedClinics, setOrderedClinics] = useState<ClinicDto[]>([]);
-  const [isReordering, setIsReordering] = useState(false);
-
-  useEffect(() => {
-    if (!isReordering && clinics.data) setOrderedClinics(clinics.data);
-  }, [clinics.data, isReordering]);
-
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-
-    const oldIndex = orderedClinics.findIndex((clinic) => clinic.id === active.id);
-    const newIndex = orderedClinics.findIndex((clinic) => clinic.id === over.id);
-    if (oldIndex === -1 || newIndex === -1) return;
-
-    const moved = arrayMove(orderedClinics, oldIndex, newIndex);
-    const changed = moved
-      .map((clinic, index) => ({ clinic, index }))
-      .filter(({ clinic, index }) => clinic.sortOrder !== index);
-
-    // sortOrder is stamped onto the local copy right away so the dropped position sticks
-    // immediately, instead of waiting on the PATCH responses and the query invalidation
-    // they each trigger - which land at unpredictable times and briefly snap the list back
-    // to its pre-drop order before the fresh fetch arrives.
-    const withNewOrder = moved.map((clinic, index) => ({ ...clinic, sortOrder: index }));
-    setOrderedClinics(withNewOrder);
-    setIsReordering(true);
-
-    void Promise.all(
-      changed.map(({ clinic, index }) => reorder.mutateAsync({ id: clinic.id, input: { sortOrder: index } })),
-    ).finally(() => {
-      queryClient.setQueryData(keys.clinics(true), withNewOrder);
-      setIsReordering(false);
-    });
-  };
 
   const openCreate = () => {
     setForm({ name: '', status: 'ACTIVE' });
@@ -114,11 +63,7 @@ export default function SettingsClinics() {
       if (editing) {
         await update.mutateAsync({ id: editing.id, input: { name: trimmed, status: form.status } });
       } else {
-        // New clinics are appended after the last one - reordering from then on is done by
-        // dragging the cards below.
-        const nextSortOrder =
-          orderedClinics.length > 0 ? Math.max(...orderedClinics.map((clinic) => clinic.sortOrder)) + 1 : 0;
-        await create.mutateAsync({ name: trimmed, status: form.status, sortOrder: nextSortOrder });
+        await create.mutateAsync({ name: trimmed, status: form.status });
       }
       close();
     } catch {
@@ -145,15 +90,25 @@ export default function SettingsClinics() {
       {clinics.isError && <ErrorNotice message={t('common.somethingWrong')} />}
 
       {clinics.data && (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={orderedClinics.map((clinic) => clinic.id)} strategy={verticalListSortingStrategy}>
-            <ul className="flex flex-col gap-2">
-              {orderedClinics.map((clinic) => (
-                <SortableClinicRow key={clinic.id} clinic={clinic} onEdit={() => openEdit(clinic)} />
-              ))}
-            </ul>
-          </SortableContext>
-        </DndContext>
+        <ul className="flex flex-col gap-2">
+          {clinics.data.map((clinic) => (
+            <li key={clinic.id}>
+              <Card>
+                <button
+                  type="button"
+                  onClick={() => openEdit(clinic)}
+                  className="tap flex w-full items-center gap-3 px-4 py-3.5 text-start"
+                >
+                  <span className="flex-1 font-semibold text-ink">{clinic.name}</span>
+                  <Badge tone={clinic.status === 'ACTIVE' ? 'active' : 'inactive'}>
+                    {clinic.status === 'ACTIVE' ? t('common.active') : t('common.inactive')}
+                  </Badge>
+                  <span className="text-sm font-semibold text-brand-700">{t('common.edit')}</span>
+                </button>
+              </Card>
+            </li>
+          ))}
+        </ul>
       )}
 
       <Sheet
@@ -207,47 +162,6 @@ export default function SettingsClinics() {
         </div>
       </Sheet>
     </div>
-  );
-}
-
-/**
- * A clinic row draggable by its handle to reorder the list. The handle is a separate
- * button from the tap-to-edit content, since dnd-kit's drag listeners on a button that
- * also has an onClick would fight over the same pointer gesture.
- */
-function SortableClinicRow({ clinic, onEdit }: { clinic: ClinicDto; onEdit: () => void }) {
-  const { t } = useTranslation();
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: clinic.id,
-  });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  return (
-    <li ref={setNodeRef} style={style}>
-      <Card className="flex items-stretch overflow-hidden">
-        <button
-          type="button"
-          {...attributes}
-          {...listeners}
-          aria-label={t('common.dragToReorder')}
-          className="tap flex w-11 shrink-0 touch-none cursor-grab items-center justify-center text-muted active:cursor-grabbing"
-        >
-          <DragHandleIcon />
-        </button>
-        <button type="button" onClick={onEdit} className="tap flex w-full items-center gap-3 py-3.5 ps-1 pe-4 text-start">
-          <span className="flex-1 font-semibold text-ink">{clinic.name}</span>
-          <Badge tone={clinic.status === 'ACTIVE' ? 'active' : 'inactive'}>
-            {clinic.status === 'ACTIVE' ? t('common.active') : t('common.inactive')}
-          </Badge>
-          <span className="text-sm font-semibold text-brand-700">{t('common.edit')}</span>
-        </button>
-      </Card>
-    </li>
   );
 }
 
