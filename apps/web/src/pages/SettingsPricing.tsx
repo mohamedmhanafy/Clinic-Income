@@ -103,38 +103,44 @@ export default function SettingsPricing() {
         <>
           <section>
             <SectionTitle>{t('settings.currentFees')}</SectionTitle>
-            <Card>
-              <ul className="divide-y divide-line">
-                {currentFees.map(({ service, price }) => (
-                  <li key={service.id} className="flex items-center gap-3 px-4 py-3.5">
-                    <span className="min-w-0 flex-1">
-                      <span className="block font-medium text-ink">
-                        {language === 'ar' ? service.nameAr : service.nameEn}
-                      </span>
-                      <span className="block text-xs text-muted">
-                        {price
-                          ? `${t('settings.effectiveFrom')} ${formatFullDate(price.effectiveFrom, language)}`
-                          : t('settings.noPrices')}
-                      </span>
-                    </span>
-
-                    <span className="tabnum text-lg font-bold text-ink">
-                      {price ? <Money value={price.fee} /> : '—'}
-                    </span>
-
-                    {price && (
+            <ul className="flex flex-col gap-2">
+              {currentFees.map(({ service, price }) => (
+                <li key={service.id}>
+                  <Card>
+                    {price ? (
                       <button
                         type="button"
                         onClick={() => openSheet(service.id)}
-                        className="tap rounded-lg px-2 text-sm font-semibold text-brand-700"
+                        className="tap flex w-full items-center gap-3 px-4 py-3.5 text-start"
                       >
-                        {t('common.edit')}
+                        <span className="min-w-0 flex-1">
+                          <span className="block font-medium text-ink">
+                            {language === 'ar' ? service.nameAr : service.nameEn}
+                          </span>
+                          <span className="block text-xs text-muted">
+                            {t('settings.effectiveFrom')} {formatFullDate(price.effectiveFrom, language)}
+                          </span>
+                        </span>
+                        <span className="tabnum text-lg font-bold text-ink">
+                          <Money value={price.fee} />
+                        </span>
+                        <span className="text-sm font-semibold text-brand-700">{t('common.edit')}</span>
                       </button>
+                    ) : (
+                      <div className="flex items-center gap-3 px-4 py-3.5">
+                        <span className="min-w-0 flex-1">
+                          <span className="block font-medium text-ink">
+                            {language === 'ar' ? service.nameAr : service.nameEn}
+                          </span>
+                          <span className="block text-xs text-muted">{t('settings.noPrices')}</span>
+                        </span>
+                        <span className="tabnum text-lg font-bold text-ink">—</span>
+                      </div>
                     )}
-                  </li>
-                ))}
-              </ul>
-            </Card>
+                  </Card>
+                </li>
+              ))}
+            </ul>
           </section>
 
           <section>
