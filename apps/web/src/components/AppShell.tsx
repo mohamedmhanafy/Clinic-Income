@@ -78,10 +78,22 @@ function LanguageToggle() {
 }
 
 function TopBar() {
+  const location = useLocation();
+  // The clinics settings page manages the whole list of clinics rather than one clinic's
+  // data, so a picker that scopes everything else to a single clinic has nothing to do
+  // here - showing it anyway just invites the "why doesn't switching clinics change
+  // anything" confusion. The page's own heading already says "Clinics".
+  const isClinicsSettings = location.pathname === '/settings/clinics';
+
   return (
     <header className="no-print sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-3 px-4">
-        <ClinicPicker />
+      <div
+        className={[
+          'mx-auto flex h-14 max-w-5xl items-center gap-3 px-4',
+          isClinicsSettings ? 'justify-end' : 'justify-between',
+        ].join(' ')}
+      >
+        {!isClinicsSettings && <ClinicPicker />}
         <LanguageToggle />
       </div>
     </header>
