@@ -122,6 +122,7 @@ export default function SettingsServices() {
                   <Badge tone={service.status === 'ACTIVE' ? 'active' : 'inactive'}>
                     {service.status === 'ACTIVE' ? t('common.active') : t('common.inactive')}
                   </Badge>
+                  <span className="text-sm font-semibold text-brand-700">{t('common.edit')}</span>
                 </button>
               </Card>
             </li>
