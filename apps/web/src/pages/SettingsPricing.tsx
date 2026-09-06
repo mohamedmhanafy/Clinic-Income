@@ -122,13 +122,15 @@ export default function SettingsPricing() {
                       {price ? <Money value={price.fee} /> : '—'}
                     </span>
 
-                    <button
-                      type="button"
-                      onClick={() => openSheet(service.id)}
-                      className="tap rounded-lg px-2 text-sm font-semibold text-brand-700"
-                    >
-                      {price ? t('common.edit') : t('settings.addFee')}
-                    </button>
+                    {price && (
+                      <button
+                        type="button"
+                        onClick={() => openSheet(service.id)}
+                        className="tap rounded-lg px-2 text-sm font-semibold text-brand-700"
+                      >
+                        {t('common.edit')}
+                      </button>
+                    )}
                   </li>
                 ))}
               </ul>
