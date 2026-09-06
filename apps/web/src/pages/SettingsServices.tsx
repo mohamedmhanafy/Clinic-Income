@@ -39,6 +39,28 @@ import {
 import { DragHandleIcon } from '../components/icons';
 import { DatePicker } from '../components/DatePicker';
 
+/**
+ * The service code is a stable machine key, never shown to users - so instead of asking
+ * for one, it's derived from the English name and de-duplicated against the codes already
+ * in use for this clinic.
+ */
+function deriveServiceCode(nameEn: string, existingCodes: Set<string>): string {
+  const base =
+    nameEn
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 40) || 'SERVICE';
+
+  if (!existingCodes.has(base)) return base;
+
+  for (let suffix = 2; ; suffix += 1) {
+    const candidate = `${base.slice(0, 40 - String(suffix).length - 1)}_${suffix}`;
+    if (!existingCodes.has(candidate)) return candidate;
+  }
+}
+
 export default function SettingsServices() {
   const { t } = useTranslation();
   const { clinicId, setClinicId, language } = useAppState();
@@ -54,7 +76,6 @@ export default function SettingsServices() {
   const [editing, setEditing] = useState<ServiceDto | null>(null);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({
-    code: '',
     nameEn: '',
     nameAr: '',
     status: 'ACTIVE' as 'ACTIVE' | 'INACTIVE',
@@ -103,7 +124,7 @@ export default function SettingsServices() {
   };
 
   const openCreate = () => {
-    setForm({ code: '', nameEn: '', nameAr: '', status: 'ACTIVE' });
+    setForm({ nameEn: '', nameAr: '', status: 'ACTIVE' });
     setEditing(null);
     setCreating(true);
     setInitialFee('');
@@ -113,7 +134,7 @@ export default function SettingsServices() {
   };
 
   const openEdit = (service: ServiceDto) => {
-    setForm({ code: service.code, nameEn: service.nameEn, nameAr: service.nameAr, status: service.status });
+    setForm({ nameEn: service.nameEn, nameAr: service.nameAr, status: service.status });
     setCreating(false);
     setEditing(service);
     update.reset();
@@ -133,7 +154,8 @@ export default function SettingsServices() {
         // dragging the cards below, not by typing a number.
         const nextSortOrder =
           orderedServices.length > 0 ? Math.max(...orderedServices.map((service) => service.sortOrder)) + 1 : 0;
-        const created = await create.mutateAsync({ clinicId, code: form.code.trim().toUpperCase(), nameEn: form.nameEn.trim(), nameAr: form.nameAr.trim(), status: form.status, sortOrder: nextSortOrder });
+        const code = deriveServiceCode(form.nameEn, new Set(orderedServices.map((service) => service.code)));
+        const created = await create.mutateAsync({ clinicId, code, nameEn: form.nameEn.trim(), nameAr: form.nameAr.trim(), status: form.status, sortOrder: nextSortOrder });
         
         if (initialFee.trim() !== '') {
           await schedule.mutateAsync({
@@ -159,7 +181,7 @@ export default function SettingsServices() {
     clinicId !== null &&
     form.nameEn.trim() &&
     form.nameAr.trim() &&
-    (editing !== null || (form.code.trim() && initialFeeValid));
+    (editing !== null || initialFeeValid);
 
   return (
     <div className="flex flex-col gap-4">
@@ -192,13 +214,6 @@ export default function SettingsServices() {
 
       <Sheet open={creating || editing !== null} onClose={close} title={editing ? t('common.edit') : t('settings.addService')}>
         <div className="flex flex-col gap-4">
-          {!editing && (
-            <Field label={t('settings.serviceCode')} hint={t('settings.serviceCodeHint')} htmlFor="service-code">
-              <Input id="service-code" value={form.code} placeholder="FOLLOW_UP"
-                onChange={(event) => setForm((current) => ({ ...current, code: event.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '_') }))} />
-            </Field>
-          )}
-
           <Field label={t('settings.nameEn')} htmlFor="service-en">
             <Input id="service-en" value={form.nameEn} onChange={(event) => setForm((current) => ({ ...current, nameEn: event.target.value }))} />
           </Field>
