@@ -1,5 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+  DndContext,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { useAppState } from '../lib/app-state';
 import type { ServiceDto } from '@clinic/shared';
 import { useClinics, useCreateService, useDeleteService, useServices, useUpdateService, useSchedulePriceChange } from '../lib/queries';
@@ -17,6 +27,7 @@ import {
   Sheet,
   Spinner,
 } from '../components/ui';
+import { DragHandleIcon } from '../components/icons';
 import { DatePicker } from '../components/DatePicker';
 
 export default function SettingsServices() {
@@ -27,6 +38,7 @@ export default function SettingsServices() {
   const services = useServices(clinicId, true);
   const create = useCreateService();
   const update = useUpdateService();
+  const reorder = useUpdateService();
   const schedule = useSchedulePriceChange(clinicId);
 
   const [editing, setEditing] = useState<ServiceDto | null>(null);
@@ -36,15 +48,44 @@ export default function SettingsServices() {
     nameEn: '',
     nameAr: '',
     status: 'ACTIVE' as 'ACTIVE' | 'INACTIVE',
-    sortOrder: 0,
   });
 
   const [initialFee, setInitialFee] = useState('');
   const [feesFrom, setFeesFrom] = useState(todayIso());
   const [priceError, setPriceError] = useState<string | null>(null);
 
+  const [orderedServices, setOrderedServices] = useState<ServiceDto[]>([]);
+  const [isReordering, setIsReordering] = useState(false);
+
+  useEffect(() => {
+    if (!isReordering && services.data) setOrderedServices(services.data);
+  }, [services.data, isReordering]);
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = orderedServices.findIndex((service) => service.id === active.id);
+    const newIndex = orderedServices.findIndex((service) => service.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reordered = arrayMove(orderedServices, oldIndex, newIndex);
+    setOrderedServices(reordered);
+
+    const changed = reordered
+      .map((service, index) => ({ service, index }))
+      .filter(({ service, index }) => service.sortOrder !== index);
+
+    setIsReordering(true);
+    void Promise.all(
+      changed.map(({ service, index }) => reorder.mutateAsync({ id: service.id, input: { sortOrder: index } })),
+    ).finally(() => setIsReordering(false));
+  };
+
   const openCreate = () => {
-    setForm({ code: '', nameEn: '', nameAr: '', status: 'ACTIVE', sortOrder: 0 });
+    setForm({ code: '', nameEn: '', nameAr: '', status: 'ACTIVE' });
     setEditing(null);
     setCreating(true);
     setInitialFee('');
@@ -54,7 +95,7 @@ export default function SettingsServices() {
   };
 
   const openEdit = (service: ServiceDto) => {
-    setForm({ code: service.code, nameEn: service.nameEn, nameAr: service.nameAr, status: service.status, sortOrder: service.sortOrder });
+    setForm({ code: service.code, nameEn: service.nameEn, nameAr: service.nameAr, status: service.status });
     setCreating(false);
     setEditing(service);
     update.reset();
@@ -66,11 +107,15 @@ export default function SettingsServices() {
     setPriceError(null);
     try {
       if (editing) {
-        await update.mutateAsync({ id: editing.id, input: { nameEn: form.nameEn.trim(), nameAr: form.nameAr.trim(), status: form.status, sortOrder: form.sortOrder } });
+        await update.mutateAsync({ id: editing.id, input: { nameEn: form.nameEn.trim(), nameAr: form.nameAr.trim(), status: form.status } });
         close();
       } else {
         if (!clinicId) return;
-        const created = await create.mutateAsync({ clinicId, code: form.code.trim().toUpperCase(), nameEn: form.nameEn.trim(), nameAr: form.nameAr.trim(), status: form.status, sortOrder: form.sortOrder });
+        // New services are appended after the last one - reordering from then on is done by
+        // dragging the cards below, not by typing a number.
+        const nextSortOrder =
+          orderedServices.length > 0 ? Math.max(...orderedServices.map((service) => service.sortOrder)) + 1 : 0;
+        const created = await create.mutateAsync({ clinicId, code: form.code.trim().toUpperCase(), nameEn: form.nameEn.trim(), nameAr: form.nameAr.trim(), status: form.status, sortOrder: nextSortOrder });
         
         if (initialFee.trim() !== '') {
           await schedule.mutateAsync({
@@ -108,26 +153,23 @@ export default function SettingsServices() {
       {services.isPending && <Spinner />}
 
       {services.data && (
-        <ul className="flex flex-col gap-2">
-          {services.data.map((service) => (
-            <li key={service.id}>
-              <Card>
-                <button type="button" onClick={() => openEdit(service)} className="tap flex w-full items-center gap-3 px-4 py-3.5 text-start">
-                  <span className="min-w-0 flex-1">
-                    <span className="block font-semibold text-ink">
-                      {language === 'ar' ? service.nameAr : service.nameEn}
-                    </span>
-                    <span className="mt-0.5 block font-mono text-xs text-muted">{service.code}</span>
-                  </span>
-                  <Badge tone={service.status === 'ACTIVE' ? 'active' : 'inactive'}>
-                    {service.status === 'ACTIVE' ? t('common.active') : t('common.inactive')}
-                  </Badge>
-                  <span className="text-sm font-semibold text-brand-700">{t('common.edit')}</span>
-                </button>
-              </Card>
-            </li>
-          ))}
-        </ul>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext
+            items={orderedServices.map((service) => service.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <ul className="flex flex-col gap-2">
+              {orderedServices.map((service) => (
+                <SortableServiceRow
+                  key={service.id}
+                  service={service}
+                  language={language}
+                  onEdit={() => openEdit(service)}
+                />
+              ))}
+            </ul>
+          </SortableContext>
+        </DndContext>
       )}
 
       <Sheet open={creating || editing !== null} onClose={close} title={editing ? t('common.edit') : t('settings.addService')}>
@@ -147,33 +189,27 @@ export default function SettingsServices() {
             <Input id="service-ar" dir="rtl" value={form.nameAr} onChange={(event) => setForm((current) => ({ ...current, nameAr: event.target.value }))} />
           </Field>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Field label={t('settings.sortOrder')} htmlFor="service-order">
-              <Input id="service-order" type="number" inputMode="numeric" min={0} value={String(form.sortOrder)}
-                onChange={(event) => setForm((current) => ({ ...current, sortOrder: Number(event.target.value.replace(/[^\d]/g, '') || 0) }))} />
-            </Field>
-            <Field label={t('common.status')}>
-              <div className="flex overflow-hidden rounded-xl border border-line">
-                {(['ACTIVE', 'INACTIVE'] as const).map((value) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => setForm((current) => ({ ...current, status: value }))}
-                    className={[
-                      'tap flex-1 py-3 text-sm font-semibold transition-colors',
-                      form.status === value
-                        ? value === 'ACTIVE'
-                          ? 'bg-brand-600 text-white'
-                          : 'bg-red-600 text-white'
-                        : 'bg-white text-muted',
-                    ].join(' ')}
-                  >
-                    {value === 'ACTIVE' ? t('common.active') : t('common.inactive')}
-                  </button>
-                ))}
-              </div>
-            </Field>
-          </div>
+          <Field label={t('common.status')}>
+            <div className="flex overflow-hidden rounded-xl border border-line">
+              {(['ACTIVE', 'INACTIVE'] as const).map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setForm((current) => ({ ...current, status: value }))}
+                  className={[
+                    'tap flex-1 py-3 text-sm font-semibold transition-colors',
+                    form.status === value
+                      ? value === 'ACTIVE'
+                        ? 'bg-brand-600 text-white'
+                        : 'bg-red-600 text-white'
+                      : 'bg-white text-muted',
+                  ].join(' ')}
+                >
+                  {value === 'ACTIVE' ? t('common.active') : t('common.inactive')}
+                </button>
+              ))}
+            </div>
+          </Field>
 
           {!editing && (
             <div className="flex flex-col gap-3 rounded-xl border border-line bg-canvas p-3">
@@ -203,6 +239,60 @@ export default function SettingsServices() {
         </div>
       </Sheet>
     </div>
+  );
+}
+
+/**
+ * A service row draggable by its handle to reorder the list. The handle is a separate
+ * button from the tap-to-edit content, since dnd-kit's drag listeners on a button that
+ * also has an onClick would fight over the same pointer gesture.
+ */
+function SortableServiceRow({
+  service,
+  language,
+  onEdit,
+}: {
+  service: ServiceDto;
+  language: string;
+  onEdit: () => void;
+}) {
+  const { t } = useTranslation();
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: service.id,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <li ref={setNodeRef} style={style}>
+      <Card className="flex items-stretch overflow-hidden">
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          aria-label={t('settings.reorderService')}
+          className="tap flex w-11 shrink-0 touch-none cursor-grab items-center justify-center text-muted active:cursor-grabbing"
+        >
+          <DragHandleIcon />
+        </button>
+        <button type="button" onClick={onEdit} className="tap flex w-full items-center gap-3 py-3.5 ps-1 pe-4 text-start">
+          <span className="min-w-0 flex-1">
+            <span className="block font-semibold text-ink">
+              {language === 'ar' ? service.nameAr : service.nameEn}
+            </span>
+            <span className="mt-0.5 block font-mono text-xs text-muted">{service.code}</span>
+          </span>
+          <Badge tone={service.status === 'ACTIVE' ? 'active' : 'inactive'}>
+            {service.status === 'ACTIVE' ? t('common.active') : t('common.inactive')}
+          </Badge>
+          <span className="text-sm font-semibold text-brand-700">{t('common.edit')}</span>
+        </button>
+      </Card>
+    </li>
   );
 }
 

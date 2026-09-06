@@ -134,7 +134,7 @@ export const en = {
     serviceCodeHint: 'A stable key such as FOLLOW_UP. Cannot be changed later.',
     nameEn: 'English name',
     nameAr: 'Arabic name',
-    sortOrder: 'Order',
+    reorderService: 'Drag to reorder',
     deleteService: 'Delete service',
     deleteServiceConfirm:
       'Delete this service and its price history permanently? If it has recorded income entries the server will reject this — set it to Inactive instead.',
@@ -294,7 +294,7 @@ export const ar: typeof en = {
     serviceCodeHint: 'رمز ثابت مثل FOLLOW_UP. لا يمكن تغييره لاحقاً.',
     nameEn: 'الاسم بالإنجليزية',
     nameAr: 'الاسم بالعربية',
-    sortOrder: 'الترتيب',
+    reorderService: 'اسحب لإعادة الترتيب',
     deleteService: 'حذف الخدمة',
     deleteServiceConfirm:
       'حذف هذه الخدمة وسجل أسعارها نهائياً؟ إذا كانت لها إيرادات مسجلة سيرفض الخادم ذلك، وينبغي تعيينها كغير نشطة عوضاً.',
