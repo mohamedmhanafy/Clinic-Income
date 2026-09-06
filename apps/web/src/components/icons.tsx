@@ -102,6 +102,15 @@ export function ChevronIcon({ className = 'h-5 w-5' }: IconProps) {
   );
 }
 
+export function TrashIcon({ className = 'h-5 w-5' }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...base} aria-hidden="true">
+      <path d="M4 7h16M9 7V4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5V7M6 7l1 13a2 2 0 0 0 2 1.9h6a2 2 0 0 0 2-1.9l1-13" />
+      <path d="M10 11v6M14 11v6" />
+    </svg>
+  );
+}
+
 export function DownloadIcon({ className = 'h-4 w-4' }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" className={className} {...base} aria-hidden="true">
