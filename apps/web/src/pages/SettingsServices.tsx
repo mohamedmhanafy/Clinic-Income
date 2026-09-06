@@ -317,7 +317,6 @@ function SortableServiceRow({
             <span className="block font-semibold text-ink">
               {language === 'ar' ? service.nameAr : service.nameEn}
             </span>
-            <span className="mt-0.5 block font-mono text-xs text-muted">{service.code}</span>
           </span>
           <Badge tone={service.status === 'ACTIVE' ? 'active' : 'inactive'}>
             {service.status === 'ACTIVE' ? t('common.active') : t('common.inactive')}
