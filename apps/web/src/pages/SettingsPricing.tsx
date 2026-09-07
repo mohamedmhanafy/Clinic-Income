@@ -92,7 +92,7 @@ export default function SettingsPricing() {
     currentFees.find((row) => row.service.id === serviceId)?.price?.fee ?? '300';
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-xl font-bold text-ink">{t('settings.pricingTitle')}</h1>
       </div>

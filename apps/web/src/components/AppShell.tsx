@@ -3,7 +3,7 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-do
 import { useTranslation } from 'react-i18next';
 import { useAppState } from '../lib/app-state';
 import { useClinics } from '../lib/queries';
-import { EmptyState, SectionTitle, Sheet, Spinner } from './ui';
+import { EmptyState, Sheet, Spinner } from './ui';
 import {
   ClinicIcon,
   DashboardIcon,
@@ -36,7 +36,7 @@ function ClinicPicker() {
       <select
         value={clinicId ?? ''}
         onChange={(event) => setClinicId(Number(event.target.value))}
-        className="tap max-w-[45vw] truncate rounded-xl border-0 bg-transparent py-1 ps-1 pe-6 text-lg font-semibold text-ink focus:outline-none sm:max-w-none"
+        className="tap max-w-[45vw] truncate rounded-lg border-0 bg-transparent py-1 ps-1 pe-6 text-lg font-semibold text-ink focus:outline-none sm:max-w-none"
       >
         {clinics.map((clinic) => (
           <option key={clinic.id} value={clinic.id}>
@@ -57,7 +57,7 @@ function LanguageToggle() {
     <div
       role="group"
       aria-label={t('nav.language')}
-      className="flex shrink-0 overflow-hidden rounded-xl border border-line"
+      className="flex shrink-0 overflow-hidden rounded-lg border border-line"
     >
       {(['en', 'ar'] as const).map((code) => (
         <button
@@ -210,19 +210,17 @@ function SideRail() {
       <nav className="flex flex-col gap-1">
         {RAIL_LINKS.map(({ to, end, labelKey, Icon }) => (
           <NavLink key={to} to={to} end={end} className={linkClass}>
-            <Icon />
+            <Icon className="h-5 w-5" />
             <span>{t(labelKey)}</span>
           </NavLink>
         ))}
       </nav>
 
       <div className="mt-6">
-        <SectionTitle>
-          <span className="flex items-center gap-2">
-            <SettingsIcon className="h-4 w-4" />
-            {t('nav.settings')}
-          </span>
-        </SectionTitle>
+        <p className="flex items-center gap-2 px-3 pb-1 text-xs font-semibold tracking-wide text-muted uppercase">
+          <SettingsIcon className="h-4 w-4" />
+          {t('nav.settings')}
+        </p>
         <nav className="flex flex-col gap-1">
           {SETTINGS_LINKS.map(({ to, labelKey, Icon }) => (
             <NavLink key={to} to={to} className={linkClass}>

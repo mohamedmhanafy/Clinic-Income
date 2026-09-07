@@ -62,7 +62,7 @@ export function Button({
  */
 export function Money({ value, className = '' }: { value: string | null | undefined; className?: string }) {
   const parts = formatMoneyParts(value);
-  if (!parts) return <span className={className}>—</span>;
+  if (!parts) return <span className={className}>-</span>;
   return (
     <span className={className}>
       {parts.amount}
@@ -129,12 +129,8 @@ export function Field({
   );
 }
 
-// h-11 matches the arrow buttons, DatePicker, and ExportBar's fixed height, so any control
-// lines up with whatever sits beside it in the same row instead of being taller from its
-// own padding. DatePicker.tsx builds on this same class rather than keeping its own copy.
-export const CONTROL_CLASS =
-  'tap h-11 w-full rounded-xl border border-line bg-white px-3.5 text-ink placeholder:text-muted/70 ' +
-  'transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100';
+const CONTROL_CLASS =
+  'tap w-full rounded-xl border border-line bg-white px-3.5 py-3 text-ink placeholder:text-muted/70 focus:border-brand-500 focus:outline-none';
 
 export function Input({ className = '', ...props }: InputHTMLAttributes<HTMLInputElement>) {
   return <input {...props} className={`${CONTROL_CLASS} ${className}`} />;
@@ -177,14 +173,13 @@ export function Stepper({
   disabled?: boolean;
   max?: number;
 }) {
-  const { t } = useTranslation();
   const clamp = (next: number) => Math.min(max, Math.max(0, next));
 
   return (
     <div className="flex items-stretch gap-2">
       <button
         type="button"
-        aria-label={t('common.decrease')}
+        aria-label="decrease"
         disabled={disabled || value <= 0}
         onClick={() => onChange(clamp(value - 1))}
         className="tap flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-line bg-white text-2xl font-semibold text-ink disabled:text-muted/40"
@@ -209,7 +204,7 @@ export function Stepper({
       />
       <button
         type="button"
-        aria-label={t('common.increase')}
+        aria-label="increase"
         disabled={disabled || value >= max}
         onClick={() => onChange(clamp(value + 1))}
         className="tap flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-line bg-white text-2xl font-semibold text-ink disabled:text-muted/40"
@@ -355,7 +350,7 @@ export function Sheet({
             type="button"
             onClick={onClose}
             aria-label={t('common.close')}
-            className="tap -me-2 flex items-center justify-center rounded-xl px-3 text-muted"
+            className="tap -me-2 flex items-center justify-center rounded-lg px-3 text-muted"
           >
             &#10005;
           </button>

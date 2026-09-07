@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppState } from '../lib/app-state';
 import { formatMonthYear, monthName } from '../lib/format';
-import { ChevronIcon } from './icons';
 
 /**
  * Month selector.
@@ -30,9 +29,11 @@ export function PeriodBar({ showJump = true }: { showJump?: boolean }) {
           type="button"
           onClick={() => stepMonth(-1)}
           className={arrow}
-          aria-label={t('common.previousMonth')}
+          aria-label="previous month"
         >
-          <ChevronIcon className="h-5 w-5 rotate-180" />
+          <span aria-hidden="true">
+            &#8249;
+          </span>
         </button>
 
         {/*
@@ -59,9 +60,11 @@ export function PeriodBar({ showJump = true }: { showJump?: boolean }) {
           type="button"
           onClick={() => stepMonth(1)}
           className={arrow}
-          aria-label={t('common.nextMonth')}
+          aria-label="next month"
         >
-          <ChevronIcon className="h-5 w-5" />
+          <span aria-hidden="true">
+            &#8250;
+          </span>
         </button>
       </div>
 
