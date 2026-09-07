@@ -119,8 +119,8 @@
 /*
  * The library's default month/year grid cells (react-datepicker__month-text,
  * __year-text) are sized by their text alone - comfortably clickable with a mouse but too
- * small a tap target on a phone. Month names need more width than a 4-digit year does, so
- * months get a wider-than-tall rectangle while years stay square.
+ * small a tap target on a phone. Both grids use a wider-than-tall rectangle rather than a
+ * square.
  * inline-flex, not flex: flex's outer display is block, which stacked every cell onto its
  * own full-width row instead of letting them wrap side by side into a grid.
  */
@@ -140,20 +140,20 @@
 }
 
 #datepicker-portal .react-datepicker__year-text {
-  width: 3rem;
-  height: 3rem;
+  width: 4rem;
+  height: 2.25rem;
 }
 
 /*
- * Sized to exactly 4 columns of year cells (3rem + 3px margin each side = 54px, x4 = 216px)
- * instead of the library's default 180px cap (a cramped 2-per-row column) or an mismatched
- * max-width wider than the content (which left the flex-wrapped rows hugging the left edge
- * with blank space on the right, since `justify-content` defaults to flex-start). Centered
- * because the wrapper is narrower than the calendar box, which is sized to the day grid's
- * width (7 columns).
+ * Sized to exactly 4 columns of year cells (4rem + 3px margin each side = 70px, x4 = 280px)
+ * so the default 12-year range lays out as 3 rows of 4 instead of the library's default
+ * 180px cap (a cramped 2-per-row column) or a max-width wider than the content (which left
+ * the flex-wrapped rows hugging the left edge with blank space on the right, since
+ * `justify-content` defaults to flex-start). Centered because the wrapper is narrower than
+ * the calendar box, which is sized to the day grid's width (7 columns).
  */
 #datepicker-portal .react-datepicker__year-wrapper {
-  width: 216px;
+  width: 280px;
   margin-left: auto;
   margin-right: auto;
 }
