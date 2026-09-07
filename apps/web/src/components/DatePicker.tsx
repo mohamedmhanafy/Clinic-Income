@@ -55,7 +55,7 @@ DefaultTrigger.displayName = 'DatePickerDefaultTrigger';
 type Mode = 'day' | 'month' | 'year';
 
 const ARROW_CLASS =
-  'flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-muted ' +
+  'flex h-5 w-5 shrink-0 items-center justify-center rounded-lg text-muted ' +
   'hover:bg-brand-50 hover:text-ink disabled:pointer-events-none disabled:opacity-30';
 
 /**
@@ -136,13 +136,13 @@ function CalendarHeader({
   }
 
   return (
-    <div className="flex items-center justify-between px-1.5 py-1">
+    <div className="flex items-center justify-between px-1.5 py-0.5">
       <button type="button" onClick={onPrev} disabled={prevDisabled} aria-label="previous" className={ARROW_CLASS}>
-        <ChevronIcon className="h-3.5 w-3.5 rotate-180" />
+        <ChevronIcon className="h-3 w-3 rotate-180" />
       </button>
       <span className="text-sm font-semibold text-ink">{label}</span>
       <button type="button" onClick={onNext} disabled={nextDisabled} aria-label="next" className={ARROW_CLASS}>
-        <ChevronIcon className="h-3.5 w-3.5" />
+        <ChevronIcon className="h-3 w-3" />
       </button>
     </div>
   );
