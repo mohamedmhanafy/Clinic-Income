@@ -145,14 +145,15 @@
 }
 
 /*
- * Widened so the squares above lay out in a comfortable 4-per-row grid instead of the
- * library's default 180px cap, which would otherwise force a cramped 2-per-row column.
- * Centered because the wrapper (260px) is narrower than the calendar box, which is sized
- * to the day grid's width (7 columns) - without margin: auto it hugs the left edge,
- * leaving a blank gap down the right side.
+ * Sized to exactly 4 columns of year cells (3rem + 3px margin each side = 54px, x4 = 216px)
+ * instead of the library's default 180px cap (a cramped 2-per-row column) or an mismatched
+ * max-width wider than the content (which left the flex-wrapped rows hugging the left edge
+ * with blank space on the right, since `justify-content` defaults to flex-start). Centered
+ * because the wrapper is narrower than the calendar box, which is sized to the day grid's
+ * width (7 columns).
  */
 #datepicker-portal .react-datepicker__year-wrapper {
-  max-width: 260px;
+  width: 216px;
   margin-left: auto;
   margin-right: auto;
 }
