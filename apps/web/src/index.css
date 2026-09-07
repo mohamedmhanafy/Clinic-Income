@@ -119,21 +119,29 @@
 /*
  * The library's default month/year grid cells (react-datepicker__month-text,
  * __year-text) are sized by their text alone - comfortably clickable with a mouse but too
- * small a tap target on a phone. Square them off at a shared size/padding so both grids
- * read as one consistent picker.
+ * small a tap target on a phone. Month names need more width than a 4-digit year does, so
+ * months get a wider-than-tall rectangle while years stay square.
+ * inline-flex, not flex: flex's outer display is block, which stacked every cell onto its
+ * own full-width row instead of letting them wrap side by side into a grid.
  */
 #datepicker-portal .react-datepicker__month-text,
 #datepicker-portal .react-datepicker__year-text {
-  /* inline-flex, not flex: flex's outer display is block, which stacked every cell onto
-     its own full-width row instead of letting them wrap side by side into a grid. */
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 3rem;
-  height: 3rem;
   padding: 0.1rem;
   margin: 3px;
   border-radius: 0.5rem;
+}
+
+#datepicker-portal .react-datepicker__month-text {
+  width: 4.5rem;
+  height: 2.25rem;
+}
+
+#datepicker-portal .react-datepicker__year-text {
+  width: 3rem;
+  height: 3rem;
 }
 
 /*
