@@ -49,7 +49,7 @@ export default function Dashboard() {
   const hasIncome = Number(data.totalIncome) > 0;
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4">
       <div>
         <h1 className="text-xl font-bold text-ink">{t('dashboard.title')}</h1>
       </div>

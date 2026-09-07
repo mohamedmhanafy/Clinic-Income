@@ -2,9 +2,11 @@ import { forwardRef, useState } from 'react';
 import ReactDatePicker, { type ReactDatePickerCustomHeaderProps } from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { format, type Locale } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import { useAppState } from '../lib/app-state';
 import { ar, enUS } from 'date-fns/locale';
 import { ChevronIcon } from './icons';
+import { CONTROL_CLASS as BASE_CONTROL_CLASS } from './ui';
 
 interface DatePickerProps {
   id?: string;
@@ -17,13 +19,10 @@ interface DatePickerProps {
 }
 
 // The end-gutter chevron marks this as a picker, not a free-text field - the same cue a
-// <select> gives for "this opens something."
-// h-11 matches the arrow buttons and PDF button's fixed height, so this field lines up with
-// whatever control sits beside it instead of being taller from its own padding.
-const CONTROL_CLASS =
-  'tap h-11 w-full cursor-pointer rounded-xl border border-line bg-white px-3.5 pe-9 text-ink ' +
-  'shadow-sm transition-colors placeholder:text-muted/70 hover:border-brand-300 focus:border-brand-500 ' +
-  'focus:outline-none focus:ring-2 focus:ring-brand-100';
+// <select> gives for "this opens something." Built on ui.tsx's shared CONTROL_CLASS (same
+// height, border, and focus ring as every other field) plus the extras a clickable trigger
+// needs: a pointer cursor, room for the chevron, and a hover cue.
+const CONTROL_CLASS = `${BASE_CONTROL_CLASS} cursor-pointer pe-9 hover:border-brand-300`;
 
 interface TriggerProps {
   value?: string;
@@ -96,6 +95,7 @@ function CalendarHeader({
   onPickMonth: () => void;
   onPickYear: () => void;
 }) {
+  const { t } = useTranslation();
   const onPrev = mode === 'day' ? decreaseMonth : decreaseYear;
   const onNext = mode === 'day' ? increaseMonth : increaseYear;
   const prevDisabled = mode === 'day' ? prevMonthButtonDisabled : prevYearButtonDisabled;
@@ -137,12 +137,12 @@ function CalendarHeader({
 
   return (
     <div className="flex items-center justify-between px-1.5 py-0.5">
-      <button type="button" onClick={onPrev} disabled={prevDisabled} aria-label="previous" className={ARROW_CLASS}>
-        <ChevronIcon className="h-3 w-3 rotate-180" />
+      <button type="button" onClick={onPrev} disabled={prevDisabled} aria-label={t('common.previous')} className={ARROW_CLASS}>
+        <ChevronIcon className="h-4 w-4 rotate-180" />
       </button>
       <span className="text-sm font-semibold text-ink">{label}</span>
-      <button type="button" onClick={onNext} disabled={nextDisabled} aria-label="next" className={ARROW_CLASS}>
-        <ChevronIcon className="h-3 w-3" />
+      <button type="button" onClick={onNext} disabled={nextDisabled} aria-label={t('common.next')} className={ARROW_CLASS}>
+        <ChevronIcon className="h-4 w-4" />
       </button>
     </div>
   );

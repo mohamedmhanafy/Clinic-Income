@@ -7,6 +7,14 @@
  * accents to distinguish examination from consultation income in charts and legends, and
  * neutrals for everything else. Financial screens are easier to read when colour carries
  * meaning rather than decoration.
+ *
+ * Type scale (Tailwind's own text-* utilities, used by role rather than by feel):
+ *   text-xs   - captions, badges, table headers, chart axis/legend labels
+ *   text-sm   - body copy, form labels, secondary buttons
+ *   text-base - primary row/card titles, page-level control text
+ *   text-lg   - prominent secondary figures (clinic name headers, current-fee amount)
+ *   text-xl   - page <h1> only
+ *   text-4xl  - the one dashboard hero figure
  */
 @theme {
   --color-canvas: #f4f6f8;

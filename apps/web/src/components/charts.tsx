@@ -28,7 +28,7 @@ import { Money } from './ui';
 const BRAND = '#0f8177';
 const GRID = '#e3e7ec';
 const MUTED = '#5b6675';
-const INK = '#0f172a';
+const INK = '#0f1728';
 
 const dataLabelStyle = { fontSize: 11, fontWeight: 600, fill: INK } as const;
 

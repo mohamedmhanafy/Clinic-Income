@@ -435,7 +435,7 @@ function MonthlyReport() {
           {Number(report.data.totals.totalIncome) > 0 && (
             <section className="no-print">
               <SectionTitle>{t('dashboard.composition')}</SectionTitle>
-              <Card className="p-4">
+              <Card className="p-3">
                 <CompositionChart
                   services={report.data.byService.map((row) => ({
                     name: language === 'ar' ? row.serviceNameAr : row.serviceNameEn,
@@ -471,7 +471,6 @@ function AnnualReport() {
               id="annual-year"
               value={year}
               onChange={(event) => setPeriod(Number(event.target.value), month)}
-              className="h-11"
             >
               {years.map((value) => (
                 <option key={value} value={value}>

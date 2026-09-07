@@ -14,6 +14,7 @@ import {
 } from '../lib/format';
 import { Button, Card, ErrorNotice, Money, Notice, Sheet, Spinner, Stepper } from '../components/ui';
 import { DatePicker } from '../components/DatePicker';
+import { ChevronIcon } from '../components/icons';
 
 /**
  * Daily income entry - the screen the app exists for.
@@ -171,7 +172,7 @@ export default function DailyEntry() {
             type="button"
             onClick={() => setMenuOpen(true)}
             aria-label={t('common.actions')}
-            className="tap flex items-center justify-center rounded-lg px-3 text-xl text-muted"
+            className="tap flex items-center justify-center rounded-xl px-3 text-xl text-muted"
           >
             &#8942;
           </button>
@@ -188,10 +189,10 @@ export default function DailyEntry() {
           <button
             type="button"
             onClick={() => stepDate(-1)}
-            aria-label="previous day"
-            className="tap flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-xl font-semibold text-ink"
+            aria-label={t('daily.previousDay')}
+            className="tap flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-ink"
           >
-            <span aria-hidden="true">&#8249;</span>
+            <ChevronIcon className="h-5 w-5 rotate-180" />
           </button>
 
           <label className="flex min-w-0 flex-1 flex-col items-center">
@@ -200,7 +201,7 @@ export default function DailyEntry() {
               value={date}
               onChange={(value) => value && setDate(value)}
               customInput={
-                <button type="button" className="tap flex flex-col items-center bg-transparent border-none text-base font-semibold text-ink cursor-pointer focus:outline-none">
+                <button type="button" className="tap flex flex-col items-center bg-transparent border-none text-base font-semibold text-ink cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 rounded-xl">
                   <span>{formatFullDate(date, language)}</span>
                   <span className="mt-0.5 text-xs text-brand-600 font-medium opacity-80">{t('common.edit')}</span>
                 </button>
@@ -211,10 +212,10 @@ export default function DailyEntry() {
           <button
             type="button"
             onClick={() => stepDate(1)}
-            aria-label="next day"
-            className="tap flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-xl font-semibold text-ink"
+            aria-label={t('daily.nextDay')}
+            className="tap flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-ink"
           >
-            <span aria-hidden="true">&#8250;</span>
+            <ChevronIcon className="h-5 w-5" />
           </button>
         </Card>
       </div>
@@ -223,7 +224,7 @@ export default function DailyEntry() {
         <button
           type="button"
           onClick={() => setDate(todayIso())}
-          className="tap self-start rounded-lg px-2 text-sm font-semibold text-brand-700"
+          className="tap self-start rounded-xl px-2 text-sm font-semibold text-brand-700"
         >
           {t('common.today')}
         </button>

@@ -56,6 +56,12 @@ export const en = {
     noData: 'No data for this period yet.',
     required: 'Required',
     somethingWrong: 'Something went wrong.',
+    previous: 'Previous',
+    next: 'Next',
+    previousMonth: 'Previous month',
+    nextMonth: 'Next month',
+    decrease: 'Decrease',
+    increase: 'Increase',
   },
   dashboard: {
     title: 'Dashboard',
@@ -77,6 +83,8 @@ export const en = {
   },
   daily: {
     title: 'Daily Income',
+    previousDay: 'Previous day',
+    nextDay: 'Next day',
     dailyTotal: 'Daily Total',
     saved: 'Saved',
     updated: 'Updated',
@@ -214,6 +222,12 @@ export const ar: typeof en = {
     noData: 'لا توجد بيانات لهذه الفترة بعد.',
     required: 'مطلوب',
     somethingWrong: 'حدث خطأ ما.',
+    previous: 'السابق',
+    next: 'التالي',
+    previousMonth: 'الشهر السابق',
+    nextMonth: 'الشهر التالي',
+    decrease: 'إنقاص',
+    increase: 'زيادة',
   },
   dashboard: {
     title: 'لوحة المعلومات',
@@ -235,6 +249,8 @@ export const ar: typeof en = {
   },
   daily: {
     title: 'الإيراد اليومي',
+    previousDay: 'اليوم السابق',
+    nextDay: 'اليوم التالي',
     dailyTotal: 'إجمالي اليوم',
     saved: 'تم الحفظ',
     updated: 'تم التحديث',
