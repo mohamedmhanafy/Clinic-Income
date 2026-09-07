@@ -1,7 +1,7 @@
-import { forwardRef } from 'react';
-import ReactDatePicker from 'react-datepicker';
+import { forwardRef, useState } from 'react';
+import ReactDatePicker, { type ReactDatePickerCustomHeaderProps } from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { useTranslation } from 'react-i18next';
+import { format, type Locale } from 'date-fns';
 import { useAppState } from '../lib/app-state';
 import { ar, enUS } from 'date-fns/locale';
 import { ChevronIcon } from './icons';
@@ -51,6 +51,93 @@ const DefaultTrigger = forwardRef<HTMLButtonElement, TriggerProps>(
 );
 DefaultTrigger.displayName = 'DatePickerDefaultTrigger';
 
+/** Which grid the popup is currently showing - drilling up from day to month to year. */
+type Mode = 'day' | 'month' | 'year';
+
+const ARROW_CLASS =
+  'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-muted ' +
+  'hover:bg-brand-50 hover:text-ink disabled:pointer-events-none disabled:opacity-30';
+
+/**
+ * Replaces react-datepicker's default header. In day mode the month and year are each
+ * their own button - clicking one drills up to a month grid or year grid instead of
+ * stepping the day calendar one month at a time. Picking a month or year drills back
+ * down (handled by the onChange in the parent), so the hierarchy is: day -> month ->
+ * year, and back down again once a choice is made.
+ */
+function CalendarHeader({
+  mode,
+  monthDate,
+  locale,
+  visibleYearsRange,
+  decreaseMonth,
+  increaseMonth,
+  decreaseYear,
+  increaseYear,
+  prevMonthButtonDisabled,
+  nextMonthButtonDisabled,
+  prevYearButtonDisabled,
+  nextYearButtonDisabled,
+  onPickMonth,
+  onPickYear,
+}: {
+  mode: Mode;
+  monthDate: Date;
+  locale: Locale;
+  visibleYearsRange?: { startYear: number; endYear: number };
+  decreaseMonth: () => void;
+  increaseMonth: () => void;
+  decreaseYear: () => void;
+  increaseYear: () => void;
+  prevMonthButtonDisabled: boolean;
+  nextMonthButtonDisabled: boolean;
+  prevYearButtonDisabled: boolean;
+  nextYearButtonDisabled: boolean;
+  onPickMonth: () => void;
+  onPickYear: () => void;
+}) {
+  const onPrev = mode === 'day' ? decreaseMonth : decreaseYear;
+  const onNext = mode === 'day' ? increaseMonth : increaseYear;
+  const prevDisabled = mode === 'day' ? prevMonthButtonDisabled : prevYearButtonDisabled;
+  const nextDisabled = mode === 'day' ? nextMonthButtonDisabled : nextYearButtonDisabled;
+
+  let label: React.ReactNode;
+  if (mode === 'day') {
+    label = (
+      <span className="flex items-center gap-1">
+        <button type="button" onClick={onPickMonth} className="rounded px-1 hover:bg-brand-50">
+          {format(monthDate, 'MMMM', { locale })}
+        </button>
+        <button type="button" onClick={onPickYear} className="rounded px-1 hover:bg-brand-50">
+          {format(monthDate, 'yyyy', { locale })}
+        </button>
+      </span>
+    );
+  } else if (mode === 'month') {
+    label = (
+      <button type="button" onClick={onPickYear} className="rounded px-1 hover:bg-brand-50">
+        {format(monthDate, 'yyyy', { locale })}
+      </button>
+    );
+  } else {
+    label = visibleYearsRange
+      ? `${visibleYearsRange.startYear} - ${visibleYearsRange.endYear}`
+      : format(monthDate, 'yyyy', { locale });
+  }
+
+  return (
+    <div className="flex items-center justify-between px-2 py-2">
+      <button type="button" onClick={onPrev} disabled={prevDisabled} aria-label="previous" className={ARROW_CLASS}>
+        <ChevronIcon className="h-4 w-4 rotate-180" />
+      </button>
+      <span className="text-sm font-semibold text-ink">{label}</span>
+      <button type="button" onClick={onNext} disabled={nextDisabled} aria-label="next" className={ARROW_CLASS}>
+        <ChevronIcon className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
 const toDate = (iso: string | undefined): Date | null => {
   if (!iso) return null;
   const parts = iso.split('-').map(Number);
@@ -71,16 +158,53 @@ const toIso = (date: Date | null): string => {
 export const DatePicker = forwardRef<any, DatePickerProps>(
   ({ id, value, onChange, className = '', minDate, maxDate, customInput }, ref) => {
     const { language } = useAppState();
+    const locale = language === 'ar' ? ar : enUS;
+    const [mode, setMode] = useState<Mode>('day');
 
     return (
       <div className="relative w-full">
         <ReactDatePicker
           id={id}
           selected={toDate(value)}
-          onChange={(date: Date | null) => onChange(toIso(date))}
+          onChange={(date: Date | null) => {
+            if (!date) return;
+            // Picking a year or month drills down a level instead of committing a value -
+            // only a day click (mode "day") is a real selection.
+            if (mode === 'year') {
+              setMode('month');
+              return;
+            }
+            if (mode === 'month') {
+              setMode('day');
+              return;
+            }
+            onChange(toIso(date));
+          }}
+          onCalendarOpen={() => setMode('day')}
+          shouldCloseOnSelect={mode === 'day'}
+          showMonthYearPicker={mode === 'month'}
+          showYearPicker={mode === 'year'}
+          renderCustomHeader={(headerProps: ReactDatePickerCustomHeaderProps) => (
+            <CalendarHeader
+              mode={mode}
+              monthDate={headerProps.monthDate}
+              locale={locale}
+              visibleYearsRange={headerProps.visibleYearsRange}
+              decreaseMonth={headerProps.decreaseMonth}
+              increaseMonth={headerProps.increaseMonth}
+              decreaseYear={headerProps.decreaseYear}
+              increaseYear={headerProps.increaseYear}
+              prevMonthButtonDisabled={headerProps.prevMonthButtonDisabled}
+              nextMonthButtonDisabled={headerProps.nextMonthButtonDisabled}
+              prevYearButtonDisabled={headerProps.prevYearButtonDisabled}
+              nextYearButtonDisabled={headerProps.nextYearButtonDisabled}
+              onPickMonth={() => setMode('month')}
+              onPickYear={() => setMode('year')}
+            />
+          )}
           dateFormat="d MMM yyyy"
           className={`${CONTROL_CLASS} ${className}`}
-          locale={language === 'ar' ? ar : enUS}
+          locale={locale}
           minDate={toDate(minDate) || undefined}
           maxDate={toDate(maxDate) || undefined}
           showPopperArrow={false}
@@ -88,11 +212,6 @@ export const DatePicker = forwardRef<any, DatePickerProps>(
           // Rendered into a body-level portal so the calendar isn't clipped by the Sheet's
           // overflow-y-auto container, which otherwise cuts off the month header and week rows.
           portalId="datepicker-portal"
-          // Dropdowns next to the prev/next arrows let a far-off month or year be reached in
-          // one selection instead of dozens of clicks through the arrows.
-          showMonthDropdown
-          showYearDropdown
-          dropdownMode="select"
           wrapperClassName="w-full"
           customInput={(customInput as any) ?? <DefaultTrigger />}
           calendarClassName="font-sans border border-line rounded-xl shadow-lg"
