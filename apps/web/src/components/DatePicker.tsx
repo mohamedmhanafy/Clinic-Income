@@ -101,28 +101,38 @@ function CalendarHeader({
   const prevDisabled = mode === 'day' ? prevMonthButtonDisabled : prevYearButtonDisabled;
   const nextDisabled = mode === 'day' ? nextMonthButtonDisabled : nextYearButtonDisabled;
 
+  // The global `button { font-size: 1rem }` reset (index.css) overrides whatever these
+  // buttons would otherwise inherit from the wrapping span, so the day/month/year labels
+  // must each set text-sm/font-semibold explicitly rather than relying on inheritance -
+  // otherwise the button-based day/month labels render larger than the plain-text year one.
+  const labelClass = 'text-sm font-semibold text-ink';
+
   let label: React.ReactNode;
   if (mode === 'day') {
     label = (
       <span className="flex items-center gap-1">
-        <button type="button" onClick={onPickMonth} className="rounded px-1 hover:bg-brand-50">
+        <button type="button" onClick={onPickMonth} className={`${labelClass} rounded px-1 hover:bg-brand-50`}>
           {format(monthDate, 'MMMM', { locale })}
         </button>
-        <button type="button" onClick={onPickYear} className="rounded px-1 hover:bg-brand-50">
+        <button type="button" onClick={onPickYear} className={`${labelClass} rounded px-1 hover:bg-brand-50`}>
           {format(monthDate, 'yyyy', { locale })}
         </button>
       </span>
     );
   } else if (mode === 'month') {
     label = (
-      <button type="button" onClick={onPickYear} className="rounded px-1 hover:bg-brand-50">
+      <button type="button" onClick={onPickYear} className={`${labelClass} rounded px-1 hover:bg-brand-50`}>
         {format(monthDate, 'yyyy', { locale })}
       </button>
     );
   } else {
-    label = visibleYearsRange
-      ? `${visibleYearsRange.startYear} - ${visibleYearsRange.endYear}`
-      : format(monthDate, 'yyyy', { locale });
+    label = (
+      <span className={labelClass}>
+        {visibleYearsRange
+          ? `${visibleYearsRange.startYear} - ${visibleYearsRange.endYear}`
+          : format(monthDate, 'yyyy', { locale })}
+      </span>
+    );
   }
 
   return (
