@@ -106,6 +106,16 @@
   }
 }
 
+/*
+ * react-datepicker renders its popper into a body-level portal (#datepicker-portal) so the
+ * Sheet's overflow-y-auto can't clip it. That moves it out from under the Sheet's own
+ * stacking context, where the library's default z-index: 1 loses to the Sheet's z-50
+ * backdrop and the calendar ends up invisible behind it.
+ */
+#datepicker-portal .react-datepicker-popper {
+  z-index: 60;
+}
+
 /* Safe-area helpers: content sits above the iPhone home indicator instead of under it. */
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom, 0px);
