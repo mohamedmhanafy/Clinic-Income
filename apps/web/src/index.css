@@ -121,13 +121,30 @@
  * __year-text) are sized by their text alone - comfortably clickable with a mouse but too
  * small a tap target on a phone. Pad them out to something finger-friendly.
  */
-#datepicker-portal .react-datepicker__month-text,
-#datepicker-portal .react-datepicker__year-text {
+#datepicker-portal .react-datepicker__month-text {
   width: auto;
   min-width: 4.5em;
   padding: 0.65rem 0.25rem;
   margin: 3px;
   border-radius: 0.5rem;
+}
+
+/* Years read shorter than month names, so give them an equal-sided square instead of a pill. */
+#datepicker-portal .react-datepicker__year-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  padding: 0;
+  margin: 3px;
+  border-radius: 0.5rem;
+}
+
+/* Widened so the squares above lay out in a comfortable 4-per-row grid instead of the
+   library's default 180px cap, which would otherwise force a cramped 2-per-row column. */
+#datepicker-portal .react-datepicker__year-wrapper {
+  max-width: 260px;
 }
 
 /* Safe-area helpers: content sits above the iPhone home indicator instead of under it. */
