@@ -25,6 +25,32 @@ const CONTROL_CLASS =
   'shadow-sm transition-colors placeholder:text-muted/70 hover:border-brand-300 focus:border-brand-500 ' +
   'focus:outline-none focus:ring-2 focus:ring-brand-100';
 
+interface TriggerProps {
+  value?: string;
+  className?: string;
+  onClick?: () => void;
+  onKeyDown?: React.KeyboardEventHandler<HTMLButtonElement>;
+  onFocus?: React.FocusEventHandler<HTMLButtonElement>;
+  onBlur?: React.FocusEventHandler<HTMLButtonElement>;
+  id?: string;
+  disabled?: boolean;
+  tabIndex?: number;
+}
+
+/**
+ * The default trigger when a caller doesn't supply its own `customInput`. A <button>
+ * rather than an <input> - clicking it can only open the calendar, never a text cursor,
+ * so there is no way to type an invalid date.
+ */
+const DefaultTrigger = forwardRef<HTMLButtonElement, TriggerProps>(
+  ({ value, className, ...handlers }, ref) => (
+    <button type="button" ref={ref} className={`text-start ${className ?? ''}`} {...handlers}>
+      {value}
+    </button>
+  )
+);
+DefaultTrigger.displayName = 'DatePickerDefaultTrigger';
+
 const toDate = (iso: string | undefined): Date | null => {
   if (!iso) return null;
   const parts = iso.split('-').map(Number);
@@ -53,9 +79,6 @@ export const DatePicker = forwardRef<any, DatePickerProps>(
           selected={toDate(value)}
           onChange={(date: Date | null) => onChange(toIso(date))}
           dateFormat="d MMM yyyy"
-          // Not readOnly: react-datepicker skips its own open-on-click handling for readOnly
-          // inputs. Typing is blocked instead, so the field still only fills via the calendar.
-          onChangeRaw={(event) => event?.preventDefault()}
           className={`${CONTROL_CLASS} ${className}`}
           locale={language === 'ar' ? ar : enUS}
           minDate={toDate(minDate) || undefined}
@@ -65,8 +88,13 @@ export const DatePicker = forwardRef<any, DatePickerProps>(
           // Rendered into a body-level portal so the calendar isn't clipped by the Sheet's
           // overflow-y-auto container, which otherwise cuts off the month header and week rows.
           portalId="datepicker-portal"
+          // Dropdowns next to the prev/next arrows let a far-off month or year be reached in
+          // one selection instead of dozens of clicks through the arrows.
+          showMonthDropdown
+          showYearDropdown
+          dropdownMode="select"
           wrapperClassName="w-full"
-          customInput={customInput as any}
+          customInput={(customInput as any) ?? <DefaultTrigger />}
           calendarClassName="font-sans border border-line rounded-xl shadow-lg"
         />
         {!customInput && (
