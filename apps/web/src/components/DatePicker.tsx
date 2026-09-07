@@ -62,6 +62,9 @@ export const DatePicker = forwardRef<any, DatePickerProps>(
           maxDate={toDate(maxDate) || undefined}
           showPopperArrow={false}
           popperPlacement="bottom-start"
+          // Rendered into a body-level portal so the calendar isn't clipped by the Sheet's
+          // overflow-y-auto container, which otherwise cuts off the month header and week rows.
+          portalId="datepicker-portal"
           wrapperClassName="w-full"
           customInput={customInput as any}
           calendarClassName="font-sans border border-line rounded-xl shadow-lg"
