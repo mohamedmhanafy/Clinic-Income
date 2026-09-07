@@ -124,7 +124,9 @@
  */
 #datepicker-portal .react-datepicker__month-text,
 #datepicker-portal .react-datepicker__year-text {
-  display: flex;
+  /* inline-flex, not flex: flex's outer display is block, which stacked every cell onto
+     its own full-width row instead of letting them wrap side by side into a grid. */
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 3.5rem;
